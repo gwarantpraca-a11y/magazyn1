@@ -134,6 +134,7 @@
 
   <div class="tabs">
     <button class="tab active" onclick="showTab('add')" id="tab-add">➕ Dodaj</button>
+    <button class="tab" onclick="showTab('scan-list')" id="tab-scan-list">📷 Zdjęcie listy</button>
     <button class="tab" onclick="showTab('list')" id="tab-list">📋 Lista</button>
   </div>
 
@@ -190,6 +191,35 @@
     </div>
   </div>
 
+  <div id="panel-scan-list" class="panel">
+    <div class="form-wrap">
+      <div class="section-title">Zdjęcie wydruku / listy towarów</div>
+      <div class="csv-area" style="margin-bottom:12px">
+        Zrób zdjęcie całego wydruku z listą towarów. AI odczyta wszystkie pozycje naraz i pokaże je do zatwierdzenia przed zapisem.
+        <br/><br/>Wydruk powinien zawierać: kody EAN, nazwy i lokalizacje (regały).
+      </div>
+      <div class="photo-btn-row">
+        <button class="photo-btn cam" onclick="document.getElementById('list-photo-input').click()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="8" width="18" height="13" rx="2"/><path d="M3 8l3-5h12l3 5"/><circle cx="12" cy="14" r="3"/></svg>
+          Zrób zdjęcie
+        </button>
+        <button class="photo-btn gal" onclick="document.getElementById('list-gallery-input').click()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+          Z galerii
+        </button>
+      </div>
+      <input type="file" id="list-photo-input" accept="image/*" capture="environment" onchange="handleListPhoto(event)"/>
+      <input type="file" id="list-gallery-input" accept="image/*" onchange="handleListPhoto(event)"/>
+      <img id="list-preview-img" style="width:100%;border-radius:12px;max-height:200px;object-fit:cover;display:none;margin:10px 0 0"/>
+      <div class="ai-bar" id="list-ai-bar" style="display:none;margin-top:10px">🤖 Analizuję listę towarów, czekaj...</div>
+      <div id="list-preview-items" style="display:none;margin-top:12px">
+        <div style="font-size:13px;font-weight:700;color:#111;margin-bottom:8px" id="list-preview-title"></div>
+        <div id="list-items-container"></div>
+        <button class="save-btn" onclick="saveAllListItems()" style="margin-top:12px;background:#2E7D32">Zapisz wszystkie do magazynu</button>
+      </div>
+    </div>
+  </div>
+
   <div id="panel-list" class="panel">
     <div class="list-search">
       <input id="search-input" type="text" placeholder="Szukaj towaru..." oninput="renderList()"/>
@@ -208,7 +238,7 @@ function updateCount() { document.getElementById('db-count').textContent = db.le
 
 // ─── TAB SWITCH ────────────────────────────────────────────────────────────
 function showTab(name) {
-  ['add','list'].forEach(t => {
+  ['add','scan-list','list'].forEach(t => {
     document.getElementById('panel-'+t).classList.toggle('active', t===name);
     document.getElementById('tab-'+t).classList.toggle('active', t===name);
   });
@@ -460,6 +490,109 @@ function renderList() {
 function deleteItem(idx) {
   if(!confirm('Usunąć: '+db[idx]?.name+'?')) return;
   db.splice(idx,1); saveDB(); renderList();
+}
+
+// ─── PHOTO LIST IMPORT ─────────────────────────────────────────────────────
+let pendingListItems = [];
+
+async function handleListPhoto(event) {
+  const file = event.target.files[0]; if(!file) return;
+  event.target.value = '';
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    const prev = document.getElementById('list-preview-img');
+    prev.src = e.target.result; prev.style.display = 'block';
+    const bar = document.getElementById('list-ai-bar');
+    bar.style.display = 'block';
+    bar.textContent = '🤖 Analizuję listę towarów, czekaj...';
+    document.getElementById('list-preview-items').style.display = 'none';
+    pendingListItems = [];
+
+    const b64 = e.target.result.split(',')[1];
+    const mime = file.type || 'image/jpeg';
+    try {
+      const resp = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 2000,
+          messages: [{
+            role: 'user',
+            content: [
+              {type: 'image', source: {type: 'base64', media_type: mime, data: b64}},
+              {type: 'text', text: `Przeanalizuj ten wydruk/listę magazynową. Wyodrębnij WSZYSTKIE pozycje towarów.
+Dla każdej pozycji podaj: kod EAN (cyfry), nazwę towaru, lokalizację/regał (np. A3, B12), ilość.
+Odpowiedz TYLKO czystym JSON (bez markdown, bez komentarzy):
+{"items":[{"ean":"","name":"","location":"","quantity":0},...]}
+Jeśli jakieś pole jest niewidoczne — wstaw pusty string lub 0.
+Jeśli nie widzisz EAN, spróbuj odczytać kod kreskowy lub numer produktu.`}
+            ]
+          }]
+        })
+      });
+      const data = await resp.json();
+      const text = data.content?.[0]?.text || '{}';
+      const clean = text.replace(/```json|```/g,'').trim();
+      const parsed = JSON.parse(clean);
+      pendingListItems = parsed.items || [];
+
+      bar.style.display = 'none';
+      const container = document.getElementById('list-items-container');
+      const title = document.getElementById('list-preview-title');
+
+      if(pendingListItems.length === 0) {
+        title.textContent = 'Nie udało się odczytać żadnych pozycji.';
+        document.getElementById('list-preview-items').style.display = 'block';
+        container.innerHTML = '<div style="color:#888;font-size:13px">Spróbuj zrobić wyraźniejsze zdjęcie lub wgraj z galerii.</div>';
+        return;
+      }
+
+      title.textContent = `Znaleziono ${pendingListItems.length} pozycji — sprawdź i zapisz:`;
+      container.innerHTML = pendingListItems.map((item, i) => `
+        <div style="background:#F8F9FA;border-radius:10px;padding:10px 12px;margin-bottom:8px;border:1px solid #E0E0E0">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+            <span style="font-size:13px;font-weight:600;color:#111;flex:1;margin-right:8px">${item.name||'(brak nazwy)'}</span>
+            <span style="font-family:monospace;font-size:15px;font-weight:700;color:#0C447C;background:#E3F2FD;padding:3px 8px;border-radius:6px">${item.location||'?'}</span>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <input data-i="${i}" data-f="ean" value="${item.ean||''}" placeholder="EAN" style="font-family:monospace;font-size:12px;padding:5px 8px;border:1px solid #DDD;border-radius:6px;width:140px;background:#fff" oninput="updatePending(this)"/>
+            <input data-i="${i}" data-f="name" value="${item.name||''}" placeholder="Nazwa" style="font-size:12px;padding:5px 8px;border:1px solid #DDD;border-radius:6px;flex:1;min-width:100px;background:#fff" oninput="updatePending(this)"/>
+            <input data-i="${i}" data-f="location" value="${item.location||''}" placeholder="Regał" style="font-size:12px;padding:5px 8px;border:1px solid #DDD;border-radius:6px;width:60px;background:#fff" oninput="updatePending(this)"/>
+            <input data-i="${i}" data-f="quantity" value="${item.quantity||0}" placeholder="Ilość" type="number" style="font-size:12px;padding:5px 8px;border:1px solid #DDD;border-radius:6px;width:60px;background:#fff" oninput="updatePending(this)"/>
+          </div>
+        </div>
+      `).join('');
+      document.getElementById('list-preview-items').style.display = 'block';
+    } catch(err) {
+      bar.textContent = '⚠️ Błąd analizy — upewnij się że jesteś online i spróbuj ponownie.';
+    }
+  };
+  reader.readAsDataURL(file);
+}
+
+function updatePending(input) {
+  const i = parseInt(input.dataset.i);
+  const f = input.dataset.f;
+  pendingListItems[i][f] = f === 'quantity' ? parseInt(input.value)||0 : input.value;
+}
+
+function saveAllListItems() {
+  let saved = 0;
+  for(const item of pendingListItems) {
+    if(!item.ean && !item.name) continue;
+    const existing = db.findIndex(d => item.ean && d.ean === item.ean);
+    const rec = {ean: item.ean||'', name: item.name||'', location: item.location||'', quantity: item.quantity||0, price: 0};
+    if(existing >= 0) db[existing] = rec; else db.push(rec);
+    saved++;
+  }
+  saveDB();
+  speak(`Zapisano ${saved} towarów do magazynu`);
+  document.getElementById('list-preview-items').style.display = 'none';
+  document.getElementById('list-preview-img').style.display = 'none';
+  pendingListItems = [];
+  alert(`Zapisano ${saved} towarów do magazynu!`);
+  showTab('list');
 }
 
 // ─── INIT ──────────────────────────────────────────────────────────────────
