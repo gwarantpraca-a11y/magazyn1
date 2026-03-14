@@ -595,9 +595,159 @@ function saveAllListItems() {
   showTab('list');
 }
 
+// ─── WBUDOWANA BAZA TOWARÓW ────────────────────────────────────────────────
+const BUILTIN_DB = [
+// === FLAIR LED (pozycje 1-41) ===
+{ean:"4306517597832",name:"FLAIR LED A60 E27 7.5W Filament klar 1055lm dim 4000K",location:"1"},
+{ean:"4306517597856",name:"FLAIR LED A67 E27 11W Filament klar 1521lm dim 4000K",location:"2"},
+{ean:"4306517604998",name:"FLAIR LED A70 E27 15W Filament klar 1900lm dim 4000K",location:"3"},
+{ean:"4306517598150",name:"FLAIR LED Tropfen G45 E14 2W Filament klar 250lm",location:"4"},
+{ean:"4306517598174",name:"FLAIR LED Tropfen G45 E14 4W Filament klar 470lm",location:"5"},
+{ean:"4306517598198",name:"FLAIR LED Tropfen G45 E14 5.5W Filament klar 806lm",location:"6"},
+{ean:"4306517598235",name:"FLAIR LED Tropfen G45 E27 2W Filament klar 250lm",location:"7"},
+{ean:"4306517598259",name:"FLAIR LED Tropfen G45 E27 4W Filament klar 470lm",location:"8"},
+{ean:"4306517598211",name:"FLAIR LED Tropfen G45 E27 5W Filament klar 806lm",location:"9"},
+{ean:"4306517598051",name:"FLAIR LED Globe G80 E27 6.5W Filament klar 806lm",location:"10"},
+{ean:"4306517598082",name:"FLAIR LED Globe G95 E27 6.5W Filament klar 806lm",location:"11"},
+{ean:"4306517598099",name:"FLAIR LED Reflektor R63 E27 4W Filament klar 280lm",location:"12"},
+{ean:"4306516560387",name:"LED A60 E27 2.2W klar 470lm 840 A-Label",location:"13"},
+{ean:"4306516560387",name:"LED A60 E27 2.2W klar 470lm 840 A-Label",location:"14"},
+{ean:"4306516560400",name:"LED A60 E27 3.8W klar 806lm 840 A-Label",location:"15"},
+{ean:"4306516560400",name:"LED A60 E27 3.8W klar 806lm 840 A-Label",location:"16"},
+{ean:"4306516560400",name:"LED A60 E27 3.8W klar 806lm 840 A-Label",location:"17"},
+{ean:"4306516560394",name:"LED PAR16 GU10 2W klar 360lm 840 A-Label",location:"18"},
+{ean:"4306516560394",name:"LED PAR16 GU10 2W klar 360lm 840 A-Label",location:"19"},
+{ean:"4306517597931",name:"FLAIR LED Kerze C35 E14 2W Filament klar 250lm",location:"20"},
+{ean:"4306517597979",name:"FLAIR LED Kerze C35 E14 5.5W Filament klar 806lm",location:"21"},
+{ean:"4306517597993",name:"FLAIR LED Kerze C35 E14 2W Filament klar 250lm",location:"22"},
+{ean:"4306517598013",name:"FLAIR LED Kerze CL35 E14 4W Filament klar 470lm",location:"23"},
+{ean:"4306517598037",name:"FLAIR LED Kerze CL35 E14 4W Filament klar 806lm",location:"24"},
+{ean:"4306517597870",name:"FLAIR LED Kerze C35 E27 2W Filament klar 250lm",location:"25"},
+{ean:"4306517597894",name:"FLAIR LED Kerze C35 E27 4W Filament klar 470lm",location:"26"},
+{ean:"4306517597917",name:"FLAIR LED Kerze C35 E27 5.5W Filament klar 806lm",location:"27"},
+{ean:"4306517598358",name:"FLAIR LED Reflektor PAR16 GU10 2.5W Filament klar 250lm",location:"28"},
+{ean:"4306517598372",name:"FLAIR LED Reflektor PAR16 GU10 5.5W Filament klar 495lm",location:"29"},
+{ean:"4306517598341",name:"FLAIR LED Reflektor MR16 GU5.3 3W Filament klar 230lm",location:"30"},
+{ean:"4306517598334",name:"FLAIR LED Reflektor MR16 GU5.3 3.5W Filament klar 345lm",location:"31"},
+{ean:"4306517598136",name:"FLAIR LED T32 E27 4W Filament klar 470lm",location:"32"},
+{ean:"4306517598112",name:"FLAIR LED ST64 E27 4W Filament klar 470lm",location:"33"},
+{ean:"4306516560417",name:"LED A60 E27 2.2W matt 470lm 840 A-Label",location:"34"},
+{ean:"4306516560417",name:"LED A60 E27 2.2W matt 470lm 840 A-Label",location:"35"},
+{ean:"4306516560417",name:"LED A60 E27 2.2W matt 470lm 840 A-Label",location:"36"},
+{ean:"4306516560424",name:"LED A60 E27 3.8W matt 806lm 840 A-Label",location:"37"},
+{ean:"4306516560424",name:"LED A60 E27 3.8W matt 806lm 840 A-Label",location:"38"},
+{ean:"4306516560424",name:"LED A60 E27 3.8W matt 806lm 840 A-Label",location:"39"},
+{ean:"4306516560431",name:"LED Kerze C35 E14 2.2W klar 470lm 840 A-Label",location:"40"},
+{ean:"4306516560707",name:"LED Kerze C35 E14 2.2W matt 470lm 840 A-Label",location:"41"},
+// === LEDVANCE / SMART WIFI (pozycje 38-89) ===
+{ean:"8720169364868",name:"Hue WA E27 2er 75W",location:"38"},
+{ean:"4058075570917",name:"SMART WIFI Fernbedienung",location:"39"},
+{ean:"4058075731363",name:"SMART+ Wifi Bewegungsmelder",location:"40"},
+{ean:"4058075730052",name:"SMART+ Wifi Türkontakt",location:"41"},
+{ean:"4058075537248",name:"SMART+ WiFi Zwischenstecker",location:"42"},
+{ean:"4058075532120",name:"3-fach Tischsteckdose Wifi mit USB",location:"43"},
+{ean:"4099854293238",name:"SMART+ WiFi Schaltbare Aussensteckdose mit Strommessung",location:"44"},
+{ean:"4058075486010",name:"SMART WIFI SOLAR Zwischenstecker EU",location:"46"},
+{ean:"4058075486034",name:"SMART WIFI PR16 GU10 5W 350lm matt d. FS3",location:"47"},
+{ean:"4058075485693",name:"SMART WIFI PR16 GU10 5W 350lm matt TW FS3",location:"48"},
+{ean:"4058075486058",name:"SMART WIFI PR16 GU10 5W 350lm matt RGBW",location:"49"},
+{ean:"4058075609754",name:"SMARTWF B40 E14 4W 470lm matt RGBW FS3",location:"50"},
+{ean:"4058075778559",name:"SMART WIFI B40 E14 4W 470lm klar d.",location:"51"},
+{ean:"4058075778597",name:"SMART WIFI B40 E14 4.9W 470lm matt d.",location:"52"},
+{ean:"4058075779075",name:"SMART WIFI B40 E14 4.9W 470lm matt RGBW",location:"53"},
+{ean:"4058075609778",name:"SMARTWF B40 E14 4.9W 470lm matt RGBW FS3",location:"54"},
+{ean:"4058075778610",name:"SMARTWF P40 E14 4W 470lm klar d.",location:"55"},
+{ean:"4058075778658",name:"SMART WIFI P40 E14 4.9W 470lm matt d.",location:"56"},
+{ean:"4058075609792",name:"SMARTWF P40 E27 4W 470lm klar d.",location:"57"},
+{ean:"4058075610521",name:"SMARTWF A55 E27 6W 680lm klar d.",location:"58"},
+{ean:"4058075528239",name:"SMARTWF A60 E27 6W 806lm klar d.",location:"59"},
+{ean:"4058075609815",name:"SMARTWFA44 E27 6W 540lm klar d.",location:"60"},
+{ean:"4306517604141",name:"FLAIR Viyu LED A60 E27 8.5W matt 806lm dim CCT",location:"61"},
+{ean:"4306517604189",name:"FLAIR Viyu LED A60 E27 9.5W 806lm dim RGBW",location:"62"},
+{ean:"4306517604585",name:"FLAIR Viyu LED Kerze C35 E14 4.8W matt 470lm dim CCT",location:"63"},
+{ean:"4306517604561",name:"FLAIR Viyu LED Kerze C35 E14 4.8W matt 470lm dim RGBW",location:"64"},
+{ean:"4306517604165",name:"FLAIR Viyu LED Reflektor PAR16 GU10 4.8W 350lm dim CCT",location:"65"},
+{ean:"4306517604547",name:"FLAIR Viyu LED Reflektor PAR16 GU10 4.8W 350lm dim RGBW",location:"66"},
+{ean:"4058075778382",name:"SMART WIFI A60 E27 9W 806lm matt d.",location:"67"},
+{ean:"4058075778818",name:"SMART WIFI A60 E27 9W 806lm matt d. FS3",location:"68"},
+{ean:"4058075778412",name:"SMART WIFI A60 E27 9W 806lm matt TW",location:"69"},
+{ean:"4058075778832",name:"SMART WIFI A60 E27 9W 806lm matt TW FS3",location:"70"},
+{ean:"4058075619012",name:"SMARTWF A30 E27 4.5W 300lm klar d.",location:"71"},
+{ean:"4058075778450",name:"SMART WIFI A60 E27 9W 806lm matt RGBW",location:"72"},
+{ean:"4058075778870",name:"SMART WIFI A60 E27 9W 806lm matt RGBW FS3",location:"73"},
+{ean:"4058075609716",name:"SMARTWF A75 E27 7.5W 1055lm matt d.",location:"74"},
+{ean:"4058075778498",name:"SMART WIFI A75 E27 9.5W 1055lm matt d.",location:"75"},
+{ean:"4058075778511",name:"SMART WIFI A75 E27 9.5W 1055lm matt TW",location:"76"},
+{ean:"4058075778535",name:"SMART WIFI A75 E27 9.5W 1055lm matt RGBW",location:"77"},
+{ean:"4058075609730",name:"SMARTWFA100 E27 11W 1521LM matt d.",location:"78"},
+{ean:"4058075778672",name:"SMART WIFI A100 E27 14W 1521lm matt d.",location:"79"},
+{ean:"4058075778979",name:"SMART WIFI A100 E27 14W 1521lm matt d. FS3",location:"80"},
+{ean:"4058075778702",name:"SMART WIFI A100 E27 14W 1521lm matt TW",location:"81"},
+{ean:"4058075778726",name:"SMART WIFI A100 E27 14W 1521lm matt RGBW",location:"82"},
+{ean:"4058075779013",name:"SMART WIFI A100 E27 14W 1521lm matt RGBW FS3",location:"83"},
+{ean:"4058075609693",name:"SMARTWF G55 E27 6W 680lm klar d.",location:"84"},
+{ean:"4058075528291",name:"SMARTWF G60 E27 5.5W 806lm klar d.",location:"85"},
+{ean:"4058075528277",name:"SMARTWF E60 E27 5.5W 806lm klar d.",location:"86"},
+{ean:"4058075515932",name:"Smart+ WF FLEX 2M RGBTW INDOOR",location:"87"},
+{ean:"4058075523838",name:"Smart+ WF FLEX 1M RGBTW INDOOR",location:"88"},
+{ean:"4058075504806",name:"Smart+ WF STRIP NEON 5M RGBTW IP44 OUTDOOR",location:"89"},
+// === PHILIPS HUE (pozycje 1-36) ===
+{ean:"8720169155114",name:"Philips Hue Bridge EU V3",location:"1"},
+{ean:"8719514342620",name:"Hue Bridge (Steuerzentrale) Weiss",location:"2"},
+{ean:"8719514274617",name:"Philips Hue Dimmer Switch EU/UK",location:"3"},
+{ean:"8719514440999",name:"Hue Tap Dial (Fernbedienung) Weiss",location:"4"},
+{ean:"8719514440937",name:"Hue Tap Dial (Fernbedienung) Schwarz",location:"5"},
+{ean:"8719514342125",name:"Hue Bewegungsmelder Indoor",location:"6"},
+{ean:"8719514342309",name:"Hue Smart Plug DE/AT (Steckdose) Weiss",location:"7"},
+{ean:"8719514318045",name:"Hue Wandschaltermodul 1er Pack",location:"8"},
+{ean:"8718699688820",name:"Hue White Filament LED E27 Einzelpack",location:"9"},
+{ean:"8719514342989",name:"Hue White Filament LED E27 Einzelpack",location:"10"},
+{ean:"8719514343009",name:"Hue White E27 Filament Globe G93 550lm",location:"11"},
+{ean:"8719514302235",name:"Philips HueW 4.5W Fil Candle E14 1p",location:"12"},
+{ean:"8719514301429",name:"Hue WA Filament E27",location:"13"},
+{ean:"8719514301467",name:"Hue WA Filament ST64 E27",location:"14"},
+{ean:"8719514301481",name:"Hue WA Filament G93 E27",location:"15"},
+{ean:"8720169364707",name:"Hue W E27 1er 75W",location:"16"},
+{ean:"8720169365797",name:"Hue W E27 2er 75W",location:"17"},
+{ean:"8719514320666",name:"Philips HueW 5.5W B39 E14 EU",location:"18"},
+{ean:"8719514320628",name:"Philips HueW 5.5W B39 E14 EU 2P",location:"19"},
+{ean:"8720169364806",name:"Hue WA E27 1er 75W",location:"20"},
+{ean:"8720169364868",name:"Hue WA E27 2er 75W",location:"21"},
+{ean:"8719514356658",name:"Hue WA E14",location:"22"},
+{ean:"8719514356733",name:"Hue WA E14 2er",location:"23"},
+{ean:"8720169364066",name:"Hue WACA E27 1er 75W",location:"24"},
+{ean:"8720169365735",name:"Hue WACA E27 2er 75W",location:"25"},
+{ean:"8719514356719",name:"Hue WACA E14 2er",location:"26"},
+{ean:"8720169230231",name:"Philips Hue W 4.2W GU10 2P",location:"27"},
+{ean:"8720169230033",name:"Philips Hue WA 4.2W GU10 2P",location:"28"},
+{ean:"8720169229815",name:"Philips Hue WCA 4.2W GU10 2P",location:"29"},
+{ean:"8719514289130",name:"Hue W E27 StarterS 3er DS 75W",location:"30"},
+{ean:"8719514291232",name:"Hue WA E27 StarterS 3er DS 75W",location:"31"},
+{ean:"8719514291416",name:"Hue White&ColorAmb.E27 2xStartSet 1100lm",location:"32"},
+{ean:"8721103087812",name:"Hue Flux Lightstrip 3m",location:"33"},
+{ean:"8721103088116",name:"Hue Flux Lightstrip 6m",location:"34"},
+{ean:"8721103088611",name:"Hue Neon Outdoor Lightstrip 3m",location:"35"},
+{ean:"8721103089090",name:"Hue Flux Outdoor Lightstrip 6m",location:"36"},
+];
+
+function preloadBuiltinDB() {
+  if(localStorage.getItem('mag_preloaded_v1')) return;
+  const existing = db.map(d=>d.ean+'_'+d.location);
+  let added = 0;
+  for(const item of BUILTIN_DB) {
+    const key = item.ean+'_'+item.location;
+    if(!existing.includes(key)) {
+      db.push({ean:item.ean, name:item.name, location:item.location, quantity:0, price:0});
+      added++;
+    }
+  }
+  if(added > 0) saveDB();
+  localStorage.setItem('mag_preloaded_v1','1');
+}
+
 // ─── INIT ──────────────────────────────────────────────────────────────────
 loadDB();
-// Auto-start listening after short delay
+preloadBuiltinDB();
 setTimeout(()=>{ startListening(); }, 800);
 </script>
 </body>
