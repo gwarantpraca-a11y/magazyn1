@@ -9,6 +9,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
 <meta name="apple-mobile-web-app-title" content="Magazyn"/>
 <link rel="manifest" href="manifest.json"/>
+<script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.19.1/umd/index.min.js"></script>
 <title>Magazyn</title>
 <style>
   *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -140,33 +141,33 @@
 
   <div id="panel-add" class="panel active">
     <div class="form-wrap">
-      <div class="section-title">Dodaj towar ze zdjęcia lub ręcznie</div>
-      <div class="photo-btn-row">
-        <button class="photo-btn cam" onclick="document.getElementById('photo-input').click()">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="8" width="18" height="13" rx="2"/><path d="M3 8l3-5h12l3 5"/><circle cx="12" cy="14" r="3"/></svg>
-          Aparat
-        </button>
-        <button class="photo-btn gal" onclick="document.getElementById('gallery-input').click()">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
-          Galeria
-        </button>
+
+      <div class="section-title">Skanuj kod kreskowy</div>
+      <button class="photo-btn cam" id="scan-barcode-btn" onclick="toggleBarcodeScanner()" style="width:100%;margin-bottom:12px">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:22px;height:22px"><rect x="2" y="4" width="4" height="16"/><rect x="8" y="4" width="2" height="16"/><rect x="12" y="4" width="4" height="16"/><rect x="18" y="4" width="4" height="16"/></svg>
+        Skanuj kod kreskowy aparatem
+      </button>
+      <div id="scanner-wrap" style="display:none;margin-bottom:12px;border-radius:12px;overflow:hidden;background:#000;position:relative">
+        <video id="scanner-video" style="width:100%;display:block;max-height:220px;object-fit:cover"></video>
+        <div style="position:absolute;top:50%;left:10%;right:10%;height:2px;background:#FF3D00;transform:translateY(-50%);pointer-events:none"></div>
+        <button onclick="toggleBarcodeScanner()" style="position:absolute;top:8px;right:8px;background:rgba(0,0,0,0.6);color:#fff;border:none;border-radius:20px;padding:6px 14px;font-size:13px">Zamknij</button>
       </div>
-      <input type="file" id="photo-input" accept="image/*" capture="environment" onchange="handleImage(event)"/>
-      <input type="file" id="gallery-input" accept="image/*" onchange="handleImage(event)"/>
-      <img id="preview-img"/>
-      <div class="ai-bar" id="ai-bar">🤖 Analizuję zdjęcie...</div>
+      <div id="scan-result-bar" style="display:none;background:#E3F2FD;border-radius:10px;padding:10px 14px;font-size:13px;color:#0D47A1;margin-bottom:12px"></div>
+
+      <div class="divider"></div>
+      <div class="section-title">Dodaj ręcznie</div>
 
       <div class="field">
         <label>Kod EAN *</label>
         <input id="f-ean" type="text" inputmode="numeric" placeholder="np. 5901234567890"/>
       </div>
       <div class="field">
-        <label>Nazwa towaru *</label>
-        <input id="f-name" type="text" placeholder="np. Kawa ziarnista 1kg"/>
+        <label>Nazwa / lista *</label>
+        <input id="f-name" type="text" placeholder="np. Flair_str_1"/>
       </div>
       <div class="field">
-        <label>Lokalizacja / regał *</label>
-        <input id="f-loc" type="text" placeholder="np. A3 lub B12"/>
+        <label>Pozycja (nr na liście) *</label>
+        <input id="f-loc" type="text" inputmode="numeric" placeholder="np. 42"/>
       </div>
       <div class="field-row">
         <div class="field">
@@ -183,8 +184,8 @@
       <div class="divider"></div>
       <div class="section-title">Import z pliku CSV</div>
       <div class="csv-area">
-        Format pliku: <code>ean,nazwa,lokalizacja,ilosc,cena</code><br/>
-        Przykład: <code>5901234567890,Kawa 1kg,A3,50,12.99</code>
+        Format: <code>ean,nazwa_listy,pozycja,ilosc,cena</code><br/>
+        Przykład: <code>4306517597832,Flair_str_1,1,0,0</code>
       </div>
       <input type="file" id="csv-file-input" accept=".csv,text/plain" onchange="importCSV(event)"/>
       <button class="import-btn" onclick="document.getElementById('csv-file-input').click()">📂 Wybierz plik CSV</button>
@@ -193,30 +194,28 @@
 
   <div id="panel-scan-list" class="panel">
     <div class="form-wrap">
-      <div class="section-title">Zdjęcie wydruku / listy towarów</div>
-      <div class="csv-area" style="margin-bottom:12px">
-        Zrób zdjęcie całego wydruku z listą towarów. AI odczyta wszystkie pozycje naraz i pokaże je do zatwierdzenia przed zapisem.
-        <br/><br/>Wydruk powinien zawierać: kody EAN, nazwy i lokalizacje (regały).
+      <div class="section-title">Dodaj listę towarów</div>
+
+      <div style="background:#E3F2FD;border-radius:14px;padding:16px;margin-bottom:14px">
+        <div style="font-size:14px;font-weight:600;color:#0C447C;margin-bottom:8px">Jak wczytać nową listę:</div>
+        <div style="font-size:13px;color:#1565C0;line-height:1.8">
+          1. Zrób zdjęcie wydruku<br/>
+          2. Wrzuć zdjęcie do <b>claude.ai</b><br/>
+          3. Napisz: <i>"zrób CSV z tej listy"</i><br/>
+          4. Pobierz CSV i wgraj poniżej
+        </div>
       </div>
-      <div class="photo-btn-row">
-        <button class="photo-btn cam" onclick="document.getElementById('list-photo-input').click()">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="8" width="18" height="13" rx="2"/><path d="M3 8l3-5h12l3 5"/><circle cx="12" cy="14" r="3"/></svg>
-          Zrób zdjęcie
-        </button>
-        <button class="photo-btn gal" onclick="document.getElementById('list-gallery-input').click()">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
-          Z galerii
-        </button>
+
+      <div class="csv-area" style="margin-bottom:10px">
+        Format CSV: <code>ean,nazwa_listy,pozycja,ilosc,cena</code><br/>
+        Przykład: <code>4306517597832,Flair_str_1,1,0,0</code>
       </div>
-      <input type="file" id="list-photo-input" accept="image/*" capture="environment" onchange="handleListPhoto(event)"/>
-      <input type="file" id="list-gallery-input" accept="image/*" onchange="handleListPhoto(event)"/>
-      <img id="list-preview-img" style="width:100%;border-radius:12px;max-height:200px;object-fit:cover;display:none;margin:10px 0 0"/>
-      <div class="ai-bar" id="list-ai-bar" style="display:none;margin-top:10px">🤖 Analizuję listę towarów, czekaj...</div>
-      <div id="list-preview-items" style="display:none;margin-top:12px">
-        <div style="font-size:13px;font-weight:700;color:#111;margin-bottom:8px" id="list-preview-title"></div>
-        <div id="list-items-container"></div>
-        <button class="save-btn" onclick="saveAllListItems()" style="margin-top:12px;background:#2E7D32">Zapisz wszystkie do magazynu</button>
-      </div>
+      <input type="file" id="csv-list-input" accept=".csv,text/plain" onchange="importCSVList(event)"/>
+      <button class="import-btn" onclick="document.getElementById('csv-list-input').click()">
+        📂 Wgraj plik CSV z listą
+      </button>
+
+      <div id="import-result" style="display:none;margin-top:12px;background:#E8F5E9;border-radius:10px;padding:12px;font-size:14px;color:#2E7D32;font-weight:600"></div>
     </div>
   </div>
 
@@ -386,56 +385,14 @@ function saveItem() {
   const loc=document.getElementById('f-loc').value.trim();
   const qty=document.getElementById('f-qty').value;
   const price=document.getElementById('f-price').value;
-  if(!ean||!name||!loc){alert('Wypełnij EAN, nazwę i lokalizację!');return;}
-  const existing=db.findIndex(i=>i.ean===ean);
+  if(!ean||!name||!loc){alert('Wypełnij EAN, nazwę listy i pozycję!');return;}
+  const existing=db.findIndex(i=>i.ean===ean&&i.name===name);
   const item={ean,name,location:loc,quantity:qty?parseInt(qty):0,price:price?parseFloat(price):0};
   if(existing>=0) db[existing]=item; else db.push(item);
   saveDB();
   ['f-ean','f-name','f-loc','f-qty','f-price'].forEach(id=>document.getElementById(id).value='');
-  document.getElementById('preview-img').style.display='none';
-  speak('Towar '+name+' zapisany');
+  speak('Zapisano');
   showTab('list');
-}
-
-// ─── IMAGE / AI ────────────────────────────────────────────────────────────
-async function handleImage(event) {
-  const file=event.target.files[0]; if(!file) return;
-  event.target.value='';
-  const reader=new FileReader();
-  reader.onload=async(e)=>{
-    const prev=document.getElementById('preview-img');
-    prev.src=e.target.result; prev.style.display='block';
-    const bar=document.getElementById('ai-bar');
-    bar.style.display='block'; bar.textContent='🤖 Analizuję zdjęcie...';
-    const b64=e.target.result.split(',')[1];
-    const mime=file.type||'image/jpeg';
-    try {
-      const resp=await fetch('https://api.anthropic.com/v1/messages',{
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({
-          model:'claude-sonnet-4-20250514',
-          max_tokens:400,
-          messages:[{role:'user',content:[
-            {type:'image',source:{type:'base64',media_type:mime,data:b64}},
-            {type:'text',text:'Przeanalizuj zdjęcie etykiety/dokumentu magazynowego. Wyodrębnij: kod EAN (cyfry), nazwę towaru, lokalizację (np. A3), ilość. Odpowiedz TYLKO czystym JSON bez markdown: {"ean":"","name":"","location":"","quantity":0}. Jeśli pole niewidoczne — pusty string lub 0.'}
-          ]}]
-        })
-      });
-      const data=await resp.json();
-      const text=data.content?.[0]?.text||'{}';
-      const clean=text.replace(/```json|```/g,'').trim();
-      const p=JSON.parse(clean);
-      if(p.ean) document.getElementById('f-ean').value=p.ean;
-      if(p.name) document.getElementById('f-name').value=p.name;
-      if(p.location) document.getElementById('f-loc').value=p.location;
-      if(p.quantity) document.getElementById('f-qty').value=p.quantity;
-      bar.textContent='✅ Dane odczytane ze zdjęcia — sprawdź i zapisz';
-    } catch(err) {
-      bar.textContent='⚠️ Błąd AI — uzupełnij dane ręcznie';
-    }
-  };
-  reader.readAsDataURL(file);
 }
 
 // ─── CSV IMPORT ─────────────────────────────────────────────────────────────
@@ -452,9 +409,7 @@ function importCSV(event) {
       if(cols.length<3){skipped++;continue;}
       const [ean,name,location,qty,price]=cols;
       if(!ean||!name){skipped++;continue;}
-      const existing=db.findIndex(it=>it.ean===ean);
-      const item={ean,name,location:location||'',quantity:qty?parseInt(qty):0,price:price?parseFloat(price):0};
-      if(existing>=0) db[existing]=item; else db.push(item);
+      db.push({ean,name,location:location||'',quantity:qty?parseInt(qty):0,price:price?parseFloat(price):0});
       imported++;
     }
     saveDB();
@@ -466,156 +421,498 @@ function importCSV(event) {
 
 // ─── LIST RENDER ────────────────────────────────────────────────────────────
 function renderList() {
-  const q=(document.getElementById('search-input')?.value||'').toLowerCase();
-  const filtered=db.filter(i=>!q||i.name.toLowerCase().includes(q)||i.ean.includes(q)||i.location.toLowerCase().includes(q));
+  const q=(document.getElementById('search-input')?.value||'').toLowerCase().trim();
   const wrap=document.getElementById('list-wrap');
-  if(filtered.length===0){
-    wrap.innerHTML=`<div class="empty-state">${db.length===0?'Brak towarów.<br/>Dodaj pierwszy towar ➕':'Brak wyników dla: '+q}</div>`;
+
+  if(db.length===0){
+    wrap.innerHTML='<div class="empty-state">Brak towarów w bazie</div>';
     return;
   }
-  wrap.innerHTML=filtered.map((item,i)=>{
-    const idx=db.indexOf(item);
-    return `<div class="item-card">
-      <div class="item-loc">${item.location||'?'}</div>
-      <div class="item-info">
-        <div class="item-name">${item.name}</div>
-        <div class="item-ean">${item.ean}</div>
-        ${item.quantity?`<div class="item-qty">${item.quantity} szt.</div>`:''}
+
+  // grupuj po nazwie listy
+  const filtered=db.filter(i=>!q||i.name.toLowerCase().includes(q)||i.ean.includes(q)||i.location.includes(q));
+
+  if(filtered.length===0){
+    wrap.innerHTML=`<div class="empty-state">Brak wyników dla: ${q}</div>`;
+    return;
+  }
+
+  // grupuj po name (nazwa listy)
+  const groups={};
+  filtered.forEach(item=>{
+    const key=item.name||'(bez listy)';
+    if(!groups[key]) groups[key]=[];
+    groups[key].push(item);
+  });
+
+  wrap.innerHTML=Object.entries(groups).map(([listName,items])=>`
+    <div style="margin-bottom:16px">
+      <div style="font-size:12px;font-weight:600;color:#0C447C;text-transform:uppercase;letter-spacing:0.06em;padding:6px 4px 4px;border-bottom:2px solid #E3F2FD;margin-bottom:6px">
+        ${listName} <span style="font-weight:400;color:#888">(${items.length} szt.)</span>
       </div>
-      <button class="item-del" onclick="deleteItem(${idx})">✕</button>
-    </div>`;
-  }).join('');
+      ${items.map(item=>{
+        const idx=db.indexOf(item);
+        return `<div class="item-card">
+          <div class="item-loc">${item.location||'?'}</div>
+          <div class="item-info">
+            <div class="item-ean">${item.ean}</div>
+          </div>
+          <button class="item-del" onclick="deleteItem(${idx})">✕</button>
+        </div>`;
+      }).join('')}
+    </div>
+  `).join('');
 }
 
 function deleteItem(idx) {
-  if(!confirm('Usunąć: '+db[idx]?.name+'?')) return;
+  if(!confirm('Usunąć pozycję EAN: '+db[idx]?.ean+'?')) return;
   db.splice(idx,1); saveDB(); renderList();
 }
 
-// ─── PHOTO LIST IMPORT ─────────────────────────────────────────────────────
-let pendingListItems = [];
-
-async function handleListPhoto(event) {
-  const file = event.target.files[0]; if(!file) return;
-  event.target.value = '';
-  const reader = new FileReader();
-  reader.onload = async (e) => {
-    const prev = document.getElementById('list-preview-img');
-    prev.src = e.target.result; prev.style.display = 'block';
-    const bar = document.getElementById('list-ai-bar');
-    bar.style.display = 'block';
-    bar.textContent = '🤖 Analizuję listę towarów, czekaj...';
-    document.getElementById('list-preview-items').style.display = 'none';
-    pendingListItems = [];
-
-    const b64 = e.target.result.split(',')[1];
-    const mime = file.type || 'image/jpeg';
-    try {
-      const resp = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
-          max_tokens: 2000,
-          messages: [{
-            role: 'user',
-            content: [
-              {type: 'image', source: {type: 'base64', media_type: mime, data: b64}},
-              {type: 'text', text: `Przeanalizuj ten wydruk/listę magazynową. Wyodrębnij WSZYSTKIE pozycje towarów.
-Dla każdej pozycji podaj: kod EAN (cyfry), nazwę towaru, lokalizację/regał (np. A3, B12), ilość.
-Odpowiedz TYLKO czystym JSON (bez markdown, bez komentarzy):
-{"items":[{"ean":"","name":"","location":"","quantity":0},...]}
-Jeśli jakieś pole jest niewidoczne — wstaw pusty string lub 0.
-Jeśli nie widzisz EAN, spróbuj odczytać kod kreskowy lub numer produktu.`}
-            ]
-          }]
-        })
-      });
-      const data = await resp.json();
-      const text = data.content?.[0]?.text || '{}';
-      const clean = text.replace(/```json|```/g,'').trim();
-      const parsed = JSON.parse(clean);
-      pendingListItems = parsed.items || [];
-
-      bar.style.display = 'none';
-      const container = document.getElementById('list-items-container');
-      const title = document.getElementById('list-preview-title');
-
-      if(pendingListItems.length === 0) {
-        title.textContent = 'Nie udało się odczytać żadnych pozycji.';
-        document.getElementById('list-preview-items').style.display = 'block';
-        container.innerHTML = '<div style="color:#888;font-size:13px">Spróbuj zrobić wyraźniejsze zdjęcie lub wgraj z galerii.</div>';
-        return;
-      }
-
-      title.textContent = `Znaleziono ${pendingListItems.length} pozycji — sprawdź i zapisz:`;
-      container.innerHTML = pendingListItems.map((item, i) => `
-        <div style="background:#F8F9FA;border-radius:10px;padding:10px 12px;margin-bottom:8px;border:1px solid #E0E0E0">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-            <span style="font-size:13px;font-weight:600;color:#111;flex:1;margin-right:8px">${item.name||'(brak nazwy)'}</span>
-            <span style="font-family:monospace;font-size:15px;font-weight:700;color:#0C447C;background:#E3F2FD;padding:3px 8px;border-radius:6px">${item.location||'?'}</span>
-          </div>
-          <div style="display:flex;gap:8px;flex-wrap:wrap">
-            <input data-i="${i}" data-f="ean" value="${item.ean||''}" placeholder="EAN" style="font-family:monospace;font-size:12px;padding:5px 8px;border:1px solid #DDD;border-radius:6px;width:140px;background:#fff" oninput="updatePending(this)"/>
-            <input data-i="${i}" data-f="name" value="${item.name||''}" placeholder="Nazwa" style="font-size:12px;padding:5px 8px;border:1px solid #DDD;border-radius:6px;flex:1;min-width:100px;background:#fff" oninput="updatePending(this)"/>
-            <input data-i="${i}" data-f="location" value="${item.location||''}" placeholder="Regał" style="font-size:12px;padding:5px 8px;border:1px solid #DDD;border-radius:6px;width:60px;background:#fff" oninput="updatePending(this)"/>
-            <input data-i="${i}" data-f="quantity" value="${item.quantity||0}" placeholder="Ilość" type="number" style="font-size:12px;padding:5px 8px;border:1px solid #DDD;border-radius:6px;width:60px;background:#fff" oninput="updatePending(this)"/>
-          </div>
-        </div>
-      `).join('');
-      document.getElementById('list-preview-items').style.display = 'block';
-    } catch(err) {
-      bar.textContent = '⚠️ Błąd analizy — upewnij się że jesteś online i spróbuj ponownie.';
+// ─── CSV LIST IMPORT ───────────────────────────────────────────────────────
+function importCSVList(event) {
+  const file=event.target.files[0]; if(!file) return;
+  event.target.value='';
+  const reader=new FileReader();
+  reader.onload=(e)=>{
+    const lines=e.target.result.split('\n').map(l=>l.trim()).filter(l=>l);
+    let imported=0, skipped=0;
+    const start=lines[0]?.toLowerCase().includes('ean')?1:0;
+    for(let i=start;i<lines.length;i++){
+      const cols=lines[i].split(/[,;]/).map(c=>c.trim().replace(/^"|"$/g,''));
+      if(cols.length<3){skipped++;continue;}
+      const [ean,name,location,qty,price]=cols;
+      if(!ean||!name){skipped++;continue;}
+      db.push({ean,name,location:location||'',quantity:qty?parseInt(qty):0,price:price?parseFloat(price):0});
+      imported++;
     }
+    saveDB();
+    const res=document.getElementById('import-result');
+    res.style.display='block';
+    res.textContent=`✅ Zaimportowano ${imported} pozycji${skipped?' (pominięto '+skipped+')':''}`;
+    speak('Zaimportowano '+imported+' pozycji');
+    setTimeout(()=>showTab('list'),1500);
   };
-  reader.readAsDataURL(file);
-}
-
-function updatePending(input) {
-  const i = parseInt(input.dataset.i);
-  const f = input.dataset.f;
-  pendingListItems[i][f] = f === 'quantity' ? parseInt(input.value)||0 : input.value;
-}
-
-function saveAllListItems() {
-  let saved = 0;
-  for(const item of pendingListItems) {
-    if(!item.ean && !item.name) continue;
-    const existing = db.findIndex(d => item.ean && d.ean === item.ean);
-    const rec = {ean: item.ean||'', name: item.name||'', location: item.location||'', quantity: item.quantity||0, price: 0};
-    if(existing >= 0) db[existing] = rec; else db.push(rec);
-    saved++;
-  }
-  saveDB();
-  speak(`Zapisano ${saved} towarów do magazynu`);
-  document.getElementById('list-preview-items').style.display = 'none';
-  document.getElementById('list-preview-img').style.display = 'none';
-  pendingListItems = [];
-  alert(`Zapisano ${saved} towarów do magazynu!`);
-  showTab('list');
+  reader.readAsText(file,'UTF-8');
 }
 
 // ─── WBUDOWANA BAZA TOWARÓW (wszystkie listy) ─────────────────────────────
+// ─── WBUDOWANA BAZA TOWARÓW (wszystkie listy) ─────────────────────────────
 const BUILTIN_DB = [
-// FLAIR_str_1
-{ean:"4306517597832",name:"Flair_str_1",location:"1"},{ean:"4306517597856",name:"Flair_str_1",location:"2"},{ean:"4306517604998",name:"Flair_str_1",location:"3"},{ean:"4306517598150",name:"Flair_str_1",location:"4"},{ean:"4306517598174",name:"Flair_str_1",location:"5"},{ean:"4306517598198",name:"Flair_str_1",location:"6"},{ean:"4306517598235",name:"Flair_str_1",location:"7"},{ean:"4306517598259",name:"Flair_str_1",location:"8"},{ean:"4306517598211",name:"Flair_str_1",location:"9"},{ean:"4306517598051",name:"Flair_str_1",location:"10"},{ean:"4306517598082",name:"Flair_str_1",location:"11"},{ean:"4306517598099",name:"Flair_str_1",location:"12"},{ean:"4306516560387",name:"Flair_str_1",location:"13"},{ean:"4306516560387",name:"Flair_str_1",location:"14"},{ean:"4306516560400",name:"Flair_str_1",location:"15"},{ean:"4306516560400",name:"Flair_str_1",location:"16"},{ean:"4306516560400",name:"Flair_str_1",location:"17"},{ean:"4306516560394",name:"Flair_str_1",location:"18"},{ean:"4306516560394",name:"Flair_str_1",location:"19"},{ean:"4306517597931",name:"Flair_str_1",location:"20"},{ean:"4306517597979",name:"Flair_str_1",location:"21"},{ean:"4306517597993",name:"Flair_str_1",location:"22"},{ean:"4306517598013",name:"Flair_str_1",location:"23"},{ean:"4306517598037",name:"Flair_str_1",location:"24"},{ean:"4306517597870",name:"Flair_str_1",location:"25"},{ean:"4306517597894",name:"Flair_str_1",location:"26"},{ean:"4306517597917",name:"Flair_str_1",location:"27"},{ean:"4306517598358",name:"Flair_str_1",location:"28"},{ean:"4306517598372",name:"Flair_str_1",location:"29"},{ean:"4306517598341",name:"Flair_str_1",location:"30"},{ean:"4306517598334",name:"Flair_str_1",location:"31"},{ean:"4306517598136",name:"Flair_str_1",location:"32"},{ean:"4306517598112",name:"Flair_str_1",location:"33"},{ean:"4306516560417",name:"Flair_str_1",location:"34"},{ean:"4306516560417",name:"Flair_str_1",location:"35"},{ean:"4306516560417",name:"Flair_str_1",location:"36"},{ean:"4306516560424",name:"Flair_str_1",location:"37"},{ean:"4306516560424",name:"Flair_str_1",location:"38"},{ean:"4306516560424",name:"Flair_str_1",location:"39"},{ean:"4306516560431",name:"Flair_str_1",location:"40"},{ean:"4306516560707",name:"Flair_str_1",location:"41"},
-// FLAIR_str_2
-{ean:"4306517603594",name:"Flair_str_2",location:"42"},{ean:"4306517603371",name:"Flair_str_2",location:"43"},{ean:"4306517603388",name:"Flair_str_2",location:"44"},{ean:"4306517603595",name:"Flair_str_2",location:"45"},{ean:"4306517603540",name:"Flair_str_2",location:"46"},{ean:"4306517603601",name:"Flair_str_2",location:"47"},{ean:"4306517603618",name:"Flair_str_2",location:"48"},{ean:"4306517603816",name:"Flair_str_2",location:"49"},{ean:"4306517603823",name:"Flair_str_2",location:"50"},{ean:"4306517603847",name:"Flair_str_2",location:"51"},{ean:"4306517603854",name:"Flair_str_2",location:"52"},{ean:"4306517603861",name:"Flair_str_2",location:"53"},{ean:"4306517603649",name:"Flair_str_2",location:"54"},{ean:"4306517603595",name:"Flair_str_2",location:"55"},{ean:"4306517603687",name:"Flair_str_2",location:"56"},{ean:"4306517603663",name:"Flair_str_2",location:"57"},{ean:"4306517603687",name:"Flair_str_2",location:"58"},{ean:"4306517603960",name:"Flair_str_2",location:"59"},{ean:"4306517603977",name:"Flair_str_2",location:"60"},{ean:"4306517604004",name:"Flair_str_2",location:"61"},{ean:"4306517604011",name:"Flair_str_2",location:"62"},{ean:"4306517603994",name:"Flair_str_2",location:"63"},{ean:"4306517603885",name:"Flair_str_2",location:"64"},{ean:"4306517603908",name:"Flair_str_2",location:"65"},{ean:"4306517603786",name:"Flair_str_2",location:"66"},{ean:"4306517603700",name:"Flair_str_2",location:"67"},{ean:"4306517603717",name:"Flair_str_2",location:"68"},{ean:"4306517603724",name:"Flair_str_2",location:"69"},{ean:"4306517603731",name:"Flair_str_2",location:"70"},{ean:"4306517603748",name:"Flair_str_2",location:"71"},{ean:"4306517603755",name:"Flair_str_2",location:"72"},{ean:"4306517603779",name:"Flair_str_2",location:"73"},{ean:"4306517603922",name:"Flair_str_2",location:"74"},{ean:"4306517603939",name:"Flair_str_2",location:"75"},{ean:"4306517603977",name:"Flair_str_2",location:"76"},{ean:"4306517679614",name:"Flair_str_2",location:"77"},{ean:"4306517679521",name:"Flair_str_2",location:"78"},{ean:"4306517275356",name:"Flair_str_2",location:"79"},{ean:"4306517679491",name:"Flair_str_2",location:"80"},{ean:"4306517679507",name:"Flair_str_2",location:"81"},{ean:"4306517679491",name:"Flair_str_2",location:"82"},{ean:"4306517680381",name:"Flair_str_2",location:"83"},{ean:"4306517680404",name:"Flair_str_2",location:"84"},{ean:"4306517680428",name:"Flair_str_2",location:"85"},{ean:"4306517680442",name:"Flair_str_2",location:"86"},
-// LEDVANCE
-{ean:"8720169364868",name:"Ledvance",location:"37"},{ean:"4058075570917",name:"Ledvance",location:"38"},{ean:"4058075731363",name:"Ledvance",location:"39"},{ean:"4058075730052",name:"Ledvance",location:"40"},{ean:"4058075537248",name:"Ledvance",location:"41"},{ean:"4058075594784",name:"Ledvance",location:"42"},{ean:"4058075532120",name:"Ledvance",location:"43"},{ean:"4099854293238",name:"Ledvance",location:"44"},{ean:"4099854088537",name:"Ledvance",location:"45"},{ean:"4058075486010",name:"Ledvance",location:"46"},{ean:"4058075486034",name:"Ledvance",location:"47"},{ean:"4058075485693",name:"Ledvance",location:"48"},{ean:"4058075486058",name:"Ledvance",location:"49"},{ean:"4058075609754",name:"Ledvance",location:"50"},{ean:"4058075778559",name:"Ledvance",location:"51"},{ean:"4058075778597",name:"Ledvance",location:"52"},{ean:"4058075779075",name:"Ledvance",location:"53"},{ean:"4058075609778",name:"Ledvance",location:"54"},{ean:"4058075778610",name:"Ledvance",location:"55"},{ean:"4058075778658",name:"Ledvance",location:"56"},{ean:"4058075609792",name:"Ledvance",location:"57"},{ean:"4058075610521",name:"Ledvance",location:"58"},{ean:"4058075528239",name:"Ledvance",location:"59"},{ean:"4058075609815",name:"Ledvance",location:"60"},{ean:"4306517604141",name:"Ledvance",location:"61"},{ean:"4306517604189",name:"Ledvance",location:"62"},{ean:"4306517604585",name:"Ledvance",location:"63"},{ean:"4306517604561",name:"Ledvance",location:"64"},{ean:"4306517604165",name:"Ledvance",location:"65"},{ean:"4306517604547",name:"Ledvance",location:"66"},{ean:"4058075778382",name:"Ledvance",location:"67"},{ean:"4058075778818",name:"Ledvance",location:"68"},{ean:"4058075778412",name:"Ledvance",location:"69"},{ean:"4058075778832",name:"Ledvance",location:"70"},{ean:"4058075619012",name:"Ledvance",location:"71"},{ean:"4058075778450",name:"Ledvance",location:"72"},{ean:"4058075778870",name:"Ledvance",location:"73"},{ean:"4058075609716",name:"Ledvance",location:"74"},{ean:"4058075778498",name:"Ledvance",location:"75"},{ean:"4058075778511",name:"Ledvance",location:"76"},{ean:"4058075778535",name:"Ledvance",location:"77"},{ean:"4058075609730",name:"Ledvance",location:"78"},{ean:"4058075778672",name:"Ledvance",location:"79"},{ean:"4058075778979",name:"Ledvance",location:"80"},{ean:"4058075778702",name:"Ledvance",location:"81"},{ean:"4058075778726",name:"Ledvance",location:"82"},{ean:"4058075779013",name:"Ledvance",location:"83"},{ean:"4058075609693",name:"Ledvance",location:"84"},{ean:"4058075528291",name:"Ledvance",location:"85"},{ean:"4058075528277",name:"Ledvance",location:"86"},{ean:"4058075515932",name:"Ledvance",location:"87"},{ean:"4058075523838",name:"Ledvance",location:"88"},{ean:"4058075504806",name:"Ledvance",location:"89"},
-// PHILLIPS_HUE
-{ean:"8720169155114",name:"Phillips_Hue",location:"1"},{ean:"8719514342620",name:"Phillips_Hue",location:"2"},{ean:"8719514274617",name:"Phillips_Hue",location:"3"},{ean:"8719514440999",name:"Phillips_Hue",location:"4"},{ean:"8719514440937",name:"Phillips_Hue",location:"5"},{ean:"8719514342125",name:"Phillips_Hue",location:"6"},{ean:"8719514342309",name:"Phillips_Hue",location:"7"},{ean:"8719514318045",name:"Phillips_Hue",location:"8"},{ean:"8718699688820",name:"Phillips_Hue",location:"9"},{ean:"8719514342989",name:"Phillips_Hue",location:"10"},{ean:"8719514343009",name:"Phillips_Hue",location:"11"},{ean:"8719514302235",name:"Phillips_Hue",location:"12"},{ean:"8719514301429",name:"Phillips_Hue",location:"13"},{ean:"8719514301467",name:"Phillips_Hue",location:"14"},{ean:"8719514301481",name:"Phillips_Hue",location:"15"},{ean:"8720169364707",name:"Phillips_Hue",location:"16"},{ean:"8720169365797",name:"Phillips_Hue",location:"17"},{ean:"8719514320666",name:"Phillips_Hue",location:"18"},{ean:"8719514320628",name:"Phillips_Hue",location:"19"},{ean:"8720169364806",name:"Phillips_Hue",location:"20"},{ean:"8720169364868",name:"Phillips_Hue",location:"21"},{ean:"8719514356658",name:"Phillips_Hue",location:"22"},{ean:"8719514356733",name:"Phillips_Hue",location:"23"},{ean:"8720169364066",name:"Phillips_Hue",location:"24"},{ean:"8720169365735",name:"Phillips_Hue",location:"25"},{ean:"8719514356719",name:"Phillips_Hue",location:"26"},{ean:"8720169230231",name:"Phillips_Hue",location:"27"},{ean:"8720169230033",name:"Phillips_Hue",location:"28"},{ean:"8720169229815",name:"Phillips_Hue",location:"29"},{ean:"8719514289130",name:"Phillips_Hue",location:"30"},{ean:"8719514291232",name:"Phillips_Hue",location:"31"},{ean:"8719514291416",name:"Phillips_Hue",location:"32"},{ean:"8721103087812",name:"Phillips_Hue",location:"33"},{ean:"8721103088116",name:"Phillips_Hue",location:"34"},{ean:"8721103088611",name:"Phillips_Hue",location:"35"},{ean:"8721103089090",name:"Phillips_Hue",location:"36"},
-// PHILLIPS_str_1
-{ean:"8719514324213",name:"Phillips_str_1",location:"1"},{ean:"8719514324398",name:"Phillips_str_1",location:"2"},{ean:"8719514323773",name:"Phillips_str_1",location:"3"},{ean:"8719514323858",name:"Phillips_str_1",location:"4"},{ean:"8719514323834",name:"Phillips_str_1",location:"5"},{ean:"8719514324039",name:"Phillips_str_1",location:"6"},{ean:"8719514324114",name:"Phillips_str_1",location:"7"},{ean:"8718699774110",name:"Phillips_str_1",location:"8"},{ean:"8718699774233",name:"Phillips_str_1",location:"9"},{ean:"8718699721674",name:"Phillips_str_1",location:"10"},{ean:"8718699774097",name:"Phillips_str_1",location:"11"},{ean:"8718699773991",name:"Phillips_str_1",location:"12"},{ean:"8720169310797",name:"Phillips_str_1",location:"13"},{ean:"8720169310834",name:"Phillips_str_1",location:"14"},{ean:"8720169310872",name:"Phillips_str_1",location:"15"},{ean:"8720169187535",name:"Phillips_str_1",location:"16"},{ean:"8720169187696",name:"Phillips_str_1",location:"17"},{ean:"8720169187856",name:"Phillips_str_1",location:"18"},{ean:"8720169188013",name:"Phillips_str_1",location:"19"},{ean:"8720169310636",name:"Phillips_str_1",location:"20"},{ean:"8720169310711",name:"Phillips_str_1",location:"21"},{ean:"8720169188198",name:"Phillips_str_1",location:"22"},{ean:"8720169187498",name:"Phillips_str_1",location:"23"},{ean:"8720169187658",name:"Phillips_str_1",location:"24"},{ean:"8720169187818",name:"Phillips_str_1",location:"25"},{ean:"8720169181979",name:"Phillips_str_1",location:"26"},{ean:"8720169202689",name:"Phillips_str_1",location:"27"},{ean:"8720169202702",name:"Phillips_str_1",location:"28"},{ean:"8721103047588",name:"Phillips_str_1",location:"29"},{ean:"8721103047564",name:"Phillips_str_1",location:"30"},{ean:"8720169194830",name:"Phillips_str_1",location:"31"},{ean:"8718699763374",name:"Phillips_str_1",location:"32"},{ean:"8718699763398",name:"Phillips_str_1",location:"33"},{ean:"8718699762698",name:"Phillips_str_1",location:"34"},{ean:"8718699763411",name:"Phillips_str_1",location:"35"},{ean:"8718699763435",name:"Phillips_str_1",location:"36"},{ean:"8718699762834",name:"Phillips_str_1",location:"37"},{ean:"8718699763459",name:"Phillips_str_1",location:"38"},{ean:"8718699763473",name:"Phillips_str_1",location:"39"},{ean:"8718699763312",name:"Phillips_str_1",location:"40"},{ean:"8718699763336",name:"Phillips_str_1",location:"41"},{ean:"8718699763251",name:"Phillips_str_1",location:"42"},{ean:"8718699763275",name:"Phillips_str_1",location:"43"},{ean:"8718699764517",name:"Phillips_str_1",location:"44"},
-// PHILLIPS_str_2
-{ean:"8718699777531",name:"Phillips_str_2",location:"45"},{ean:"8718699763077",name:"Phillips_str_2",location:"46"},{ean:"8718699762193",name:"Phillips_str_2",location:"47"},{ean:"8718699777555",name:"Phillips_str_2",location:"48"},{ean:"8718699763152",name:"Phillips_str_2",location:"49"},{ean:"8718699763299",name:"Phillips_str_2",location:"50"},{ean:"8718699763176",name:"Phillips_str_2",location:"51"},{ean:"8718699761998",name:"Phillips_str_2",location:"52"},{ean:"8718699777579",name:"Phillips_str_2",location:"53"},{ean:"8718699762995",name:"Phillips_str_2",location:"54"},{ean:"8720169301634",name:"Phillips_str_2",location:"55"},{ean:"8720169301696",name:"Phillips_str_2",location:"56"},{ean:"8720169300491",name:"Phillips_str_2",location:"57"},{ean:"8718699773755",name:"Phillips_str_2",location:"58"},{ean:"8718699773793",name:"Phillips_str_2",location:"59"},{ean:"8718699774219",name:"Phillips_str_2",location:"60"},{ean:"8718699773816",name:"Phillips_str_2",location:"61"},{ean:"8718699773830",name:"Phillips_str_2",location:"62"},{ean:"8718699773656",name:"Phillips_str_2",location:"63"},{ean:"8718699774158",name:"Phillips_str_2",location:"64"},{ean:"8718699774134",name:"Phillips_str_2",location:"65"},{ean:"8718699774059",name:"Phillips_str_2",location:"66"},{ean:"8719514307605",name:"Phillips_str_2",location:"67"},{ean:"8719514307629",name:"Phillips_str_2",location:"68"},{ean:"8718699773977",name:"Phillips_str_2",location:"69"},
-// JARZENIOWKI_str_1
-{ean:"8720169309548",name:"Jarzeniowki_str_1",location:"1"},{ean:"8720169254565",name:"Jarzeniowki_str_1",location:"2"},{ean:"8720169309586",name:"Jarzeniowki_str_1",location:"3"},{ean:"8720169254602",name:"Jarzeniowki_str_1",location:"4"},{ean:"8720169309562",name:"Jarzeniowki_str_1",location:"5"},{ean:"8720169254588",name:"Jarzeniowki_str_1",location:"6"},{ean:"8720169309609",name:"Jarzeniowki_str_1",location:"7"},{ean:"8720169254826",name:"Jarzeniowki_str_1",location:"8"},{ean:"5410288302393",name:"Jarzeniowki_str_1",location:"9"},{ean:"5410288302977",name:"Jarzeniowki_str_1",location:"10"},{ean:"4306517604417",name:"Jarzeniowki_str_1",location:"11"},{ean:"4306517604455",name:"Jarzeniowki_str_1",location:"12"},{ean:"4306517604493",name:"Jarzeniowki_str_1",location:"13"},{ean:"4306517604479",name:"Jarzeniowki_str_1",location:"14"},{ean:"4306517604516",name:"Jarzeniowki_str_1",location:"15"},{ean:"5410288302201",name:"Jarzeniowki_str_1",location:"16"},{ean:"5410288302218",name:"Jarzeniowki_str_1",location:"17"},{ean:"5410288292755",name:"Jarzeniowki_str_1",location:"18"},{ean:"5410288292779",name:"Jarzeniowki_str_1",location:"19"},{ean:"5410288292748",name:"Jarzeniowki_str_1",location:"20"},{ean:"5410288282762",name:"Jarzeniowki_str_1",location:"21"},{ean:"5410288282786",name:"Jarzeniowki_str_1",location:"22"},
-// JARZENIOWKI_str_2
-{ean:"8720169309500",name:"Jarzeniowki_str_2",location:"23"},{ean:"8720169309524",name:"Jarzeniowki_str_2",location:"24"},{ean:"5410288302362",name:"Jarzeniowki_str_2",location:"25"},{ean:"5410288302850",name:"Jarzeniowki_str_2",location:"26"},{ean:"5410288302560",name:"Jarzeniowki_str_2",location:"27"},{ean:"5410288302867",name:"Jarzeniowki_str_2",location:"28"},{ean:"5410288302201",name:"Jarzeniowki_str_2",location:"29"},{ean:"5410288302218",name:"Jarzeniowki_str_2",location:"30"},{ean:"8720169287525",name:"Jarzeniowki_str_2",location:"31"},{ean:"8718895541295",name:"Jarzeniowki_str_2",location:"32"},{ean:"5410288302249",name:"Jarzeniowki_str_2",location:"33"},{ean:"5410288302232",name:"Jarzeniowki_str_2",location:"34"},{ean:"5410288302263",name:"Jarzeniowki_str_2",location:"35"},{ean:"5410288302270",name:"Jarzeniowki_str_2",location:"36"},{ean:"5410288302287",name:"Jarzeniowki_str_2",location:"37"},{ean:"4306517626310",name:"Jarzeniowki_str_2",location:"39"},{ean:"4306517626341",name:"Jarzeniowki_str_2",location:"40"},{ean:"4306517626327",name:"Jarzeniowki_str_2",location:"41"},{ean:"4306517626334",name:"Jarzeniowki_str_2",location:"42"},{ean:"8720169309623",name:"Jarzeniowki_str_2",location:"43"},{ean:"8720169309647",name:"Jarzeniowki_str_2",location:"44"},{ean:"8720169308862",name:"Jarzeniowki_str_2",location:"45"},{ean:"8720169308909",name:"Jarzeniowki_str_2",location:"46"},{ean:"8720169308886",name:"Jarzeniowki_str_2",location:"47"},{ean:"8720169308923",name:"Jarzeniowki_str_2",location:"48"},{ean:"4058075823617",name:"Jarzeniowki_str_2",location:"49"},{ean:"4058075823631",name:"Jarzeniowki_str_2",location:"50"},{ean:"4058075823655",name:"Jarzeniowki_str_2",location:"51"},{ean:"4058075823679",name:"Jarzeniowki_str_2",location:"52"},{ean:"5410288302874",name:"Jarzeniowki_str_2",location:"53"},{ean:"5410288302577",name:"Jarzeniowki_str_2",location:"54"},{ean:"5410288302881",name:"Jarzeniowki_str_2",location:"55"},{ean:"5410288302584",name:"Jarzeniowki_str_2",location:"56"},{ean:"5410288302591",name:"Jarzeniowki_str_2",location:"57"},{ean:"5410288302904",name:"Jarzeniowki_str_2",location:"58"},{ean:"5410288302591",name:"Jarzeniowki_str_2",location:"59"},{ean:"5410288302607",name:"Jarzeniowki_str_2",location:"60"},{ean:"4306517626358",name:"Jarzeniowki_str_2",location:"61"},{ean:"8719514378032",name:"Jarzeniowki_str_2",location:"62"},{ean:"8719514378032",name:"Jarzeniowki_str_2",location:"63"},
-// RADIUS_LED
-{ean:"4003558012226",name:"Radius_Led",location:"1"},{ean:"4003558014153",name:"Radius_Led",location:"2"},{ean:"4003558014176",name:"Radius_Led",location:"3"},{ean:"4003558012257",name:"Radius_Led",location:"4"},{ean:"4003558014442",name:"Radius_Led",location:"5"},{ean:"4003558014137",name:"Radius_Led",location:"6"},{ean:"4003558011403",name:"Radius_Led",location:"7"},{ean:"4003558011588",name:"Radius_Led",location:"8"},{ean:"4003558011649",name:"Radius_Led",location:"9"},{ean:"4003558012233",name:"Radius_Led",location:"10"},{ean:"4003558011601",name:"Radius_Led",location:"11"},{ean:"4003558014169",name:"Radius_Led",location:"12"},{ean:"4003558011694",name:"Radius_Led",location:"13"},{ean:"4003558011649",name:"Radius_Led",location:"14"},{ean:"4003558012271",name:"Radius_Led",location:"15"},{ean:"4003558012233",name:"Radius_Led",location:"16"},{ean:"4003558012271",name:"Radius_Led",location:"17"},{ean:"4003558012189",name:"Radius_Led",location:"18"},{ean:"4003558012189",name:"Radius_Led",location:"19"},{ean:"4003558012189",name:"Radius_Led",location:"20"},{ean:"4003558012257",name:"Radius_Led",location:"21"},{ean:"4003558012257",name:"Radius_Led",location:"22"},{ean:"4003558014442",name:"Radius_Led",location:"23"},{ean:"4003558014169",name:"Radius_Led",location:"24"},{ean:"4003558011649",name:"Radius_Led",location:"25"},{ean:"4003558011410",name:"Radius_Led",location:"26"},{ean:"4003558011410",name:"Radius_Led",location:"27"},{ean:"4003558011488",name:"Radius_Led",location:"28"},{ean:"4003558011496",name:"Radius_Led",location:"29"},{ean:"4003558011533",name:"Radius_Led",location:"30"},{ean:"4003558011571",name:"Radius_Led",location:"31"},{ean:"4003558011533",name:"Radius_Led",location:"32"},{ean:"4003558011571",name:"Radius_Led",location:"33"},{ean:"4003558011656",name:"Radius_Led",location:"34"},{ean:"4003558012189",name:"Radius_Led",location:"35"},{ean:"4003558011731",name:"Radius_Led",location:"36"},{ean:"4003558012196",name:"Radius_Led",location:"37"},{ean:"4003558012196",name:"Radius_Led",location:"38"},{ean:"4003558012257",name:"Radius_Led",location:"39"},{ean:"4003558012257",name:"Radius_Led",location:"40"},{ean:"4003558011427",name:"Radius_Led",location:"41"},{ean:"4003558011427",name:"Radius_Led",location:"42"},{ean:"4003558011502",name:"Radius_Led",location:"43"},{ean:"4003558011540",name:"Radius_Led",location:"44"},{ean:"4003558011502",name:"Radius_Led",location:"45"},{ean:"4003558011540",name:"Radius_Led",location:"46"},{ean:"4003558011588",name:"Radius_Led",location:"47"},{ean:"4003558011588",name:"Radius_Led",location:"48"},{ean:"4003558011663",name:"Radius_Led",location:"49"},{ean:"4003558012196",name:"Radius_Led",location:"50"},{ean:"4003558011748",name:"Radius_Led",location:"51"},{ean:"4003558012202",name:"Radius_Led",location:"52"},{ean:"4003558012424",name:"Radius_Led",location:"53"},{ean:"4003558012226",name:"Radius_Led",location:"54"},{ean:"4003558012257",name:"Radius_Led",location:"55"},{ean:"4003558014084",name:"Radius_Led",location:"56"},{ean:"4003558014084",name:"Radius_Led",location:"57"},{ean:"4003558014107",name:"Radius_Led",location:"58"},{ean:"4003558014107",name:"Radius_Led",location:"59"},{ean:"4003558014114",name:"Radius_Led",location:"60"},{ean:"4003558014114",name:"Radius_Led",location:"61"},{ean:"4003558012196",name:"Radius_Led",location:"62"},{ean:"4003558014145",name:"Radius_Led",location:"63"},{ean:"4003558014121",name:"Radius_Led",location:"64"},
-// SPECJALE
+{ean:"4306517597832",name:"Flair_str_1",location:"1"},
+{ean:"4306517597856",name:"Flair_str_1",location:"2"},
+{ean:"4306517604998",name:"Flair_str_1",location:"3"},
+{ean:"4306517598150",name:"Flair_str_1",location:"4"},
+{ean:"4306517598174",name:"Flair_str_1",location:"5"},
+{ean:"4306517598198",name:"Flair_str_1",location:"6"},
+{ean:"4306517598235",name:"Flair_str_1",location:"7"},
+{ean:"4306517598259",name:"Flair_str_1",location:"8"},
+{ean:"4306517598211",name:"Flair_str_1",location:"9"},
+{ean:"4306517598051",name:"Flair_str_1",location:"10"},
+{ean:"4306517598082",name:"Flair_str_1",location:"11"},
+{ean:"4306517598099",name:"Flair_str_1",location:"12"},
+{ean:"4306516560387",name:"Flair_str_1",location:"13"},
+{ean:"4306516560387",name:"Flair_str_1",location:"14"},
+{ean:"4306516560400",name:"Flair_str_1",location:"15"},
+{ean:"4306516560400",name:"Flair_str_1",location:"16"},
+{ean:"4306516560400",name:"Flair_str_1",location:"17"},
+{ean:"4306516560394",name:"Flair_str_1",location:"18"},
+{ean:"4306516560394",name:"Flair_str_1",location:"19"},
+{ean:"4306517597931",name:"Flair_str_1",location:"20"},
+{ean:"4306517597979",name:"Flair_str_1",location:"21"},
+{ean:"4306517597993",name:"Flair_str_1",location:"22"},
+{ean:"4306517598013",name:"Flair_str_1",location:"23"},
+{ean:"4306517598037",name:"Flair_str_1",location:"24"},
+{ean:"4306517597870",name:"Flair_str_1",location:"25"},
+{ean:"4306517597894",name:"Flair_str_1",location:"26"},
+{ean:"4306517597917",name:"Flair_str_1",location:"27"},
+{ean:"4306517598358",name:"Flair_str_1",location:"28"},
+{ean:"4306517598372",name:"Flair_str_1",location:"29"},
+{ean:"4306517598341",name:"Flair_str_1",location:"30"},
+{ean:"4306517598334",name:"Flair_str_1",location:"31"},
+{ean:"4306517598136",name:"Flair_str_1",location:"32"},
+{ean:"4306517598112",name:"Flair_str_1",location:"33"},
+{ean:"4306516560417",name:"Flair_str_1",location:"34"},
+{ean:"4306516560417",name:"Flair_str_1",location:"35"},
+{ean:"4306516560417",name:"Flair_str_1",location:"36"},
+{ean:"4306516560424",name:"Flair_str_1",location:"37"},
+{ean:"4306516560424",name:"Flair_str_1",location:"38"},
+{ean:"4306516560424",name:"Flair_str_1",location:"39"},
+{ean:"4306516560431",name:"Flair_str_1",location:"40"},
+{ean:"4306516560707",name:"Flair_str_1",location:"41"},
+{ean:"4306517603594",name:"Flair_str_2",location:"42"},
+{ean:"4306517603371",name:"Flair_str_2",location:"43"},
+{ean:"4306517603388",name:"Flair_str_2",location:"44"},
+{ean:"4306517603595",name:"Flair_str_2",location:"45"},
+{ean:"4306517603540",name:"Flair_str_2",location:"46"},
+{ean:"4306517603601",name:"Flair_str_2",location:"47"},
+{ean:"4306517603618",name:"Flair_str_2",location:"48"},
+{ean:"4306517603816",name:"Flair_str_2",location:"49"},
+{ean:"4306517603823",name:"Flair_str_2",location:"50"},
+{ean:"4306517603847",name:"Flair_str_2",location:"51"},
+{ean:"4306517603854",name:"Flair_str_2",location:"52"},
+{ean:"4306517603861",name:"Flair_str_2",location:"53"},
+{ean:"4306517603649",name:"Flair_str_2",location:"54"},
+{ean:"4306517603595",name:"Flair_str_2",location:"55"},
+{ean:"4306517603687",name:"Flair_str_2",location:"56"},
+{ean:"4306517603663",name:"Flair_str_2",location:"57"},
+{ean:"4306517603687",name:"Flair_str_2",location:"58"},
+{ean:"4306517603960",name:"Flair_str_2",location:"59"},
+{ean:"4306517603977",name:"Flair_str_2",location:"60"},
+{ean:"4306517604004",name:"Flair_str_2",location:"61"},
+{ean:"4306517604011",name:"Flair_str_2",location:"62"},
+{ean:"4306517603994",name:"Flair_str_2",location:"63"},
+{ean:"4306517603885",name:"Flair_str_2",location:"64"},
+{ean:"4306517603908",name:"Flair_str_2",location:"65"},
+{ean:"4306517603786",name:"Flair_str_2",location:"66"},
+{ean:"4306517603700",name:"Flair_str_2",location:"67"},
+{ean:"4306517603717",name:"Flair_str_2",location:"68"},
+{ean:"4306517603724",name:"Flair_str_2",location:"69"},
+{ean:"4306517603731",name:"Flair_str_2",location:"70"},
+{ean:"4306517603748",name:"Flair_str_2",location:"71"},
+{ean:"4306517603755",name:"Flair_str_2",location:"72"},
+{ean:"4306517603779",name:"Flair_str_2",location:"73"},
+{ean:"4306517603922",name:"Flair_str_2",location:"74"},
+{ean:"4306517603939",name:"Flair_str_2",location:"75"},
+{ean:"4306517679614",name:"Flair_str_2",location:"77"},
+{ean:"4306517679521",name:"Flair_str_2",location:"78"},
+{ean:"4306517275356",name:"Flair_str_2",location:"79"},
+{ean:"4306517679491",name:"Flair_str_2",location:"80"},
+{ean:"4306517679507",name:"Flair_str_2",location:"81"},
+{ean:"4306517680381",name:"Flair_str_2",location:"83"},
+{ean:"4306517680404",name:"Flair_str_2",location:"84"},
+{ean:"4306517680428",name:"Flair_str_2",location:"85"},
+{ean:"4306517680442",name:"Flair_str_2",location:"86"},
+{ean:"8720169364868",name:"Ledvance",location:"37"},
+{ean:"4058075570917",name:"Ledvance",location:"38"},
+{ean:"4058075731363",name:"Ledvance",location:"39"},
+{ean:"4058075730052",name:"Ledvance",location:"40"},
+{ean:"4058075537248",name:"Ledvance",location:"41"},
+{ean:"4058075594784",name:"Ledvance",location:"42"},
+{ean:"4058075532120",name:"Ledvance",location:"43"},
+{ean:"4099854293238",name:"Ledvance",location:"44"},
+{ean:"4099854088537",name:"Ledvance",location:"45"},
+{ean:"4058075486010",name:"Ledvance",location:"46"},
+{ean:"4058075486034",name:"Ledvance",location:"47"},
+{ean:"4058075485693",name:"Ledvance",location:"48"},
+{ean:"4058075486058",name:"Ledvance",location:"49"},
+{ean:"4058075609754",name:"Ledvance",location:"50"},
+{ean:"4058075778559",name:"Ledvance",location:"51"},
+{ean:"4058075778597",name:"Ledvance",location:"52"},
+{ean:"4058075779075",name:"Ledvance",location:"53"},
+{ean:"4058075609778",name:"Ledvance",location:"54"},
+{ean:"4058075778610",name:"Ledvance",location:"55"},
+{ean:"4058075778658",name:"Ledvance",location:"56"},
+{ean:"4058075609792",name:"Ledvance",location:"57"},
+{ean:"4058075610521",name:"Ledvance",location:"58"},
+{ean:"4058075528239",name:"Ledvance",location:"59"},
+{ean:"4058075609815",name:"Ledvance",location:"60"},
+{ean:"4306517604141",name:"Ledvance",location:"61"},
+{ean:"4306517604189",name:"Ledvance",location:"62"},
+{ean:"4306517604585",name:"Ledvance",location:"63"},
+{ean:"4306517604561",name:"Ledvance",location:"64"},
+{ean:"4306517604165",name:"Ledvance",location:"65"},
+{ean:"4306517604547",name:"Ledvance",location:"66"},
+{ean:"4058075778382",name:"Ledvance",location:"67"},
+{ean:"4058075778818",name:"Ledvance",location:"68"},
+{ean:"4058075778412",name:"Ledvance",location:"69"},
+{ean:"4058075778832",name:"Ledvance",location:"70"},
+{ean:"4058075619012",name:"Ledvance",location:"71"},
+{ean:"4058075778450",name:"Ledvance",location:"72"},
+{ean:"4058075778870",name:"Ledvance",location:"73"},
+{ean:"4058075609716",name:"Ledvance",location:"74"},
+{ean:"4058075778498",name:"Ledvance",location:"75"},
+{ean:"4058075778511",name:"Ledvance",location:"76"},
+{ean:"4058075778535",name:"Ledvance",location:"77"},
+{ean:"4058075609730",name:"Ledvance",location:"78"},
+{ean:"4058075778672",name:"Ledvance",location:"79"},
+{ean:"4058075778979",name:"Ledvance",location:"80"},
+{ean:"4058075778702",name:"Ledvance",location:"81"},
+{ean:"4058075778726",name:"Ledvance",location:"82"},
+{ean:"4058075779013",name:"Ledvance",location:"83"},
+{ean:"4058075609693",name:"Ledvance",location:"84"},
+{ean:"4058075528291",name:"Ledvance",location:"85"},
+{ean:"4058075528277",name:"Ledvance",location:"86"},
+{ean:"4058075515932",name:"Ledvance",location:"87"},
+{ean:"4058075523838",name:"Ledvance",location:"88"},
+{ean:"4058075504806",name:"Ledvance",location:"89"},
+{ean:"8720169155114",name:"Phillips_Hue",location:"1"},
+{ean:"8719514342620",name:"Phillips_Hue",location:"2"},
+{ean:"8719514274617",name:"Phillips_Hue",location:"3"},
+{ean:"8719514440999",name:"Phillips_Hue",location:"4"},
+{ean:"8719514440937",name:"Phillips_Hue",location:"5"},
+{ean:"8719514342125",name:"Phillips_Hue",location:"6"},
+{ean:"8719514342309",name:"Phillips_Hue",location:"7"},
+{ean:"8719514318045",name:"Phillips_Hue",location:"8"},
+{ean:"8718699688820",name:"Phillips_Hue",location:"9"},
+{ean:"8719514342989",name:"Phillips_Hue",location:"10"},
+{ean:"8719514343009",name:"Phillips_Hue",location:"11"},
+{ean:"8719514302235",name:"Phillips_Hue",location:"12"},
+{ean:"8719514301429",name:"Phillips_Hue",location:"13"},
+{ean:"8719514301467",name:"Phillips_Hue",location:"14"},
+{ean:"8719514301481",name:"Phillips_Hue",location:"15"},
+{ean:"8720169364707",name:"Phillips_Hue",location:"16"},
+{ean:"8720169365797",name:"Phillips_Hue",location:"17"},
+{ean:"8719514320666",name:"Phillips_Hue",location:"18"},
+{ean:"8719514320628",name:"Phillips_Hue",location:"19"},
+{ean:"8720169364806",name:"Phillips_Hue",location:"20"},
+{ean:"8720169364868",name:"Phillips_Hue",location:"21"},
+{ean:"8719514356658",name:"Phillips_Hue",location:"22"},
+{ean:"8719514356733",name:"Phillips_Hue",location:"23"},
+{ean:"8720169364066",name:"Phillips_Hue",location:"24"},
+{ean:"8720169365735",name:"Phillips_Hue",location:"25"},
+{ean:"8719514356719",name:"Phillips_Hue",location:"26"},
+{ean:"8720169230231",name:"Phillips_Hue",location:"27"},
+{ean:"8720169230033",name:"Phillips_Hue",location:"28"},
+{ean:"8720169229815",name:"Phillips_Hue",location:"29"},
+{ean:"8719514289130",name:"Phillips_Hue",location:"30"},
+{ean:"8719514291232",name:"Phillips_Hue",location:"31"},
+{ean:"8719514291416",name:"Phillips_Hue",location:"32"},
+{ean:"8721103087812",name:"Phillips_Hue",location:"33"},
+{ean:"8721103088116",name:"Phillips_Hue",location:"34"},
+{ean:"8721103088611",name:"Phillips_Hue",location:"35"},
+{ean:"8721103089090",name:"Phillips_Hue",location:"36"},
+{ean:"8719514324213",name:"Phillips_str_1",location:"1"},
+{ean:"8719514324398",name:"Phillips_str_1",location:"2"},
+{ean:"8719514323773",name:"Phillips_str_1",location:"3"},
+{ean:"8719514323858",name:"Phillips_str_1",location:"4"},
+{ean:"8719514323834",name:"Phillips_str_1",location:"5"},
+{ean:"8719514324039",name:"Phillips_str_1",location:"6"},
+{ean:"8719514324114",name:"Phillips_str_1",location:"7"},
+{ean:"8718699774110",name:"Phillips_str_1",location:"8"},
+{ean:"8718699774233",name:"Phillips_str_1",location:"9"},
+{ean:"8718699721674",name:"Phillips_str_1",location:"10"},
+{ean:"8718699774097",name:"Phillips_str_1",location:"11"},
+{ean:"8718699773991",name:"Phillips_str_1",location:"12"},
+{ean:"8720169310797",name:"Phillips_str_1",location:"13"},
+{ean:"8720169310834",name:"Phillips_str_1",location:"14"},
+{ean:"8720169310872",name:"Phillips_str_1",location:"15"},
+{ean:"8720169187535",name:"Phillips_str_1",location:"16"},
+{ean:"8720169187696",name:"Phillips_str_1",location:"17"},
+{ean:"8720169187856",name:"Phillips_str_1",location:"18"},
+{ean:"8720169188013",name:"Phillips_str_1",location:"19"},
+{ean:"8720169310636",name:"Phillips_str_1",location:"20"},
+{ean:"8720169310711",name:"Phillips_str_1",location:"21"},
+{ean:"8720169188198",name:"Phillips_str_1",location:"22"},
+{ean:"8720169187498",name:"Phillips_str_1",location:"23"},
+{ean:"8720169187658",name:"Phillips_str_1",location:"24"},
+{ean:"8720169187818",name:"Phillips_str_1",location:"25"},
+{ean:"8720169181979",name:"Phillips_str_1",location:"26"},
+{ean:"8720169202689",name:"Phillips_str_1",location:"27"},
+{ean:"8720169202702",name:"Phillips_str_1",location:"28"},
+{ean:"8721103047588",name:"Phillips_str_1",location:"29"},
+{ean:"8721103047564",name:"Phillips_str_1",location:"30"},
+{ean:"8720169194830",name:"Phillips_str_1",location:"31"},
+{ean:"8718699763374",name:"Phillips_str_1",location:"32"},
+{ean:"8718699763398",name:"Phillips_str_1",location:"33"},
+{ean:"8718699762698",name:"Phillips_str_1",location:"34"},
+{ean:"8718699763411",name:"Phillips_str_1",location:"35"},
+{ean:"8718699763435",name:"Phillips_str_1",location:"36"},
+{ean:"8718699762834",name:"Phillips_str_1",location:"37"},
+{ean:"8718699763459",name:"Phillips_str_1",location:"38"},
+{ean:"8718699763473",name:"Phillips_str_1",location:"39"},
+{ean:"8718699763312",name:"Phillips_str_1",location:"40"},
+{ean:"8718699763336",name:"Phillips_str_1",location:"41"},
+{ean:"8718699763251",name:"Phillips_str_1",location:"42"},
+{ean:"8718699763275",name:"Phillips_str_1",location:"43"},
+{ean:"8718699764517",name:"Phillips_str_1",location:"44"},
+{ean:"8718699777531",name:"Phillips_str_2",location:"45"},
+{ean:"8718699763077",name:"Phillips_str_2",location:"46"},
+{ean:"8718699762193",name:"Phillips_str_2",location:"47"},
+{ean:"8718699777555",name:"Phillips_str_2",location:"48"},
+{ean:"8718699763152",name:"Phillips_str_2",location:"49"},
+{ean:"8718699763299",name:"Phillips_str_2",location:"50"},
+{ean:"8718699763176",name:"Phillips_str_2",location:"51"},
+{ean:"8718699761998",name:"Phillips_str_2",location:"52"},
+{ean:"8718699777579",name:"Phillips_str_2",location:"53"},
+{ean:"8718699762995",name:"Phillips_str_2",location:"54"},
+{ean:"8720169301634",name:"Phillips_str_2",location:"55"},
+{ean:"8720169301696",name:"Phillips_str_2",location:"56"},
+{ean:"8720169300491",name:"Phillips_str_2",location:"57"},
+{ean:"8718699773755",name:"Phillips_str_2",location:"58"},
+{ean:"8718699773793",name:"Phillips_str_2",location:"59"},
+{ean:"8718699774219",name:"Phillips_str_2",location:"60"},
+{ean:"8718699773816",name:"Phillips_str_2",location:"61"},
+{ean:"8718699773830",name:"Phillips_str_2",location:"62"},
+{ean:"8718699773656",name:"Phillips_str_2",location:"63"},
+{ean:"8718699774158",name:"Phillips_str_2",location:"64"},
+{ean:"8718699774134",name:"Phillips_str_2",location:"65"},
+{ean:"8718699774059",name:"Phillips_str_2",location:"66"},
+{ean:"8719514307605",name:"Phillips_str_2",location:"67"},
+{ean:"8719514307629",name:"Phillips_str_2",location:"68"},
+{ean:"8718699773977",name:"Phillips_str_2",location:"69"},
+{ean:"8720169309548",name:"Jarzeniowki_str_1",location:"1"},
+{ean:"8720169254565",name:"Jarzeniowki_str_1",location:"2"},
+{ean:"8720169309586",name:"Jarzeniowki_str_1",location:"3"},
+{ean:"8720169254602",name:"Jarzeniowki_str_1",location:"4"},
+{ean:"8720169309562",name:"Jarzeniowki_str_1",location:"5"},
+{ean:"8720169254588",name:"Jarzeniowki_str_1",location:"6"},
+{ean:"8720169309609",name:"Jarzeniowki_str_1",location:"7"},
+{ean:"8720169254826",name:"Jarzeniowki_str_1",location:"8"},
+{ean:"5410288302393",name:"Jarzeniowki_str_1",location:"9"},
+{ean:"5410288302977",name:"Jarzeniowki_str_1",location:"10"},
+{ean:"4306517604417",name:"Jarzeniowki_str_1",location:"11"},
+{ean:"4306517604455",name:"Jarzeniowki_str_1",location:"12"},
+{ean:"4306517604493",name:"Jarzeniowki_str_1",location:"13"},
+{ean:"4306517604479",name:"Jarzeniowki_str_1",location:"14"},
+{ean:"4306517604516",name:"Jarzeniowki_str_1",location:"15"},
+{ean:"5410288302201",name:"Jarzeniowki_str_1",location:"16"},
+{ean:"5410288302218",name:"Jarzeniowki_str_1",location:"17"},
+{ean:"5410288292755",name:"Jarzeniowki_str_1",location:"18"},
+{ean:"5410288292779",name:"Jarzeniowki_str_1",location:"19"},
+{ean:"5410288292748",name:"Jarzeniowki_str_1",location:"20"},
+{ean:"5410288282762",name:"Jarzeniowki_str_1",location:"21"},
+{ean:"5410288282786",name:"Jarzeniowki_str_1",location:"22"},
+{ean:"8720169309500",name:"Jarzeniowki_str_2",location:"23"},
+{ean:"8720169309524",name:"Jarzeniowki_str_2",location:"24"},
+{ean:"5410288302362",name:"Jarzeniowki_str_2",location:"25"},
+{ean:"5410288302850",name:"Jarzeniowki_str_2",location:"26"},
+{ean:"5410288302560",name:"Jarzeniowki_str_2",location:"27"},
+{ean:"5410288302867",name:"Jarzeniowki_str_2",location:"28"},
+{ean:"5410288302201",name:"Jarzeniowki_str_2",location:"29"},
+{ean:"5410288302218",name:"Jarzeniowki_str_2",location:"30"},
+{ean:"8720169287525",name:"Jarzeniowki_str_2",location:"31"},
+{ean:"8718895541295",name:"Jarzeniowki_str_2",location:"32"},
+{ean:"5410288302249",name:"Jarzeniowki_str_2",location:"33"},
+{ean:"5410288302232",name:"Jarzeniowki_str_2",location:"34"},
+{ean:"5410288302263",name:"Jarzeniowki_str_2",location:"35"},
+{ean:"5410288302270",name:"Jarzeniowki_str_2",location:"36"},
+{ean:"5410288302287",name:"Jarzeniowki_str_2",location:"37"},
+{ean:"4306517626310",name:"Jarzeniowki_str_2",location:"39"},
+{ean:"4306517626341",name:"Jarzeniowki_str_2",location:"40"},
+{ean:"4306517626327",name:"Jarzeniowki_str_2",location:"41"},
+{ean:"4306517626334",name:"Jarzeniowki_str_2",location:"42"},
+{ean:"8720169309623",name:"Jarzeniowki_str_2",location:"43"},
+{ean:"8720169309647",name:"Jarzeniowki_str_2",location:"44"},
+{ean:"8720169308862",name:"Jarzeniowki_str_2",location:"45"},
+{ean:"8720169308909",name:"Jarzeniowki_str_2",location:"46"},
+{ean:"8720169308886",name:"Jarzeniowki_str_2",location:"47"},
+{ean:"8720169308923",name:"Jarzeniowki_str_2",location:"48"},
+{ean:"4058075823617",name:"Jarzeniowki_str_2",location:"49"},
+{ean:"4058075823631",name:"Jarzeniowki_str_2",location:"50"},
+{ean:"4058075823655",name:"Jarzeniowki_str_2",location:"51"},
+{ean:"4058075823679",name:"Jarzeniowki_str_2",location:"52"},
+{ean:"5410288302874",name:"Jarzeniowki_str_2",location:"53"},
+{ean:"5410288302577",name:"Jarzeniowki_str_2",location:"54"},
+{ean:"5410288302881",name:"Jarzeniowki_str_2",location:"55"},
+{ean:"5410288302584",name:"Jarzeniowki_str_2",location:"56"},
+{ean:"5410288302591",name:"Jarzeniowki_str_2",location:"57"},
+{ean:"5410288302904",name:"Jarzeniowki_str_2",location:"58"},
+{ean:"5410288302607",name:"Jarzeniowki_str_2",location:"59"},
+{ean:"5410288302591",name:"Jarzeniowki_str_2",location:"60"},
+{ean:"4306517626358",name:"Jarzeniowki_str_2",location:"61"},
+{ean:"8719514378032",name:"Jarzeniowki_str_2",location:"62"},
+{ean:"8719514378002",name:"Jarzeniowki_str_2",location:"63"},
+{ean:"4003558012226",name:"Radius_Led",location:"1"},
+{ean:"4003558014153",name:"Radius_Led",location:"2"},
+{ean:"4003558014176",name:"Radius_Led",location:"3"},
+{ean:"4003558012257",name:"Radius_Led",location:"4"},
+{ean:"4003558014442",name:"Radius_Led",location:"5"},
+{ean:"4003558014137",name:"Radius_Led",location:"6"},
+{ean:"4003558011403",name:"Radius_Led",location:"7"},
+{ean:"4003558011588",name:"Radius_Led",location:"8"},
+{ean:"4003558011649",name:"Radius_Led",location:"9"},
+{ean:"4003558012233",name:"Radius_Led",location:"10"},
+{ean:"4003558011601",name:"Radius_Led",location:"11"},
+{ean:"4003558014169",name:"Radius_Led",location:"12"},
+{ean:"4003558011694",name:"Radius_Led",location:"13"},
+{ean:"4003558011649",name:"Radius_Led",location:"14"},
+{ean:"4003558012271",name:"Radius_Led",location:"15"},
+{ean:"4003558012233",name:"Radius_Led",location:"16"},
+{ean:"4003558012271",name:"Radius_Led",location:"17"},
+{ean:"4003558012189",name:"Radius_Led",location:"18"},
+{ean:"4003558012189",name:"Radius_Led",location:"19"},
+{ean:"4003558012189",name:"Radius_Led",location:"20"},
+{ean:"4003558012257",name:"Radius_Led",location:"21"},
+{ean:"4003558012257",name:"Radius_Led",location:"22"},
+{ean:"4003558014442",name:"Radius_Led",location:"23"},
+{ean:"4003558014169",name:"Radius_Led",location:"24"},
+{ean:"4003558011649",name:"Radius_Led",location:"25"},
+{ean:"4003558011410",name:"Radius_Led",location:"26"},
+{ean:"4003558011410",name:"Radius_Led",location:"27"},
+{ean:"4003558011488",name:"Radius_Led",location:"28"},
+{ean:"4003558011496",name:"Radius_Led",location:"29"},
+{ean:"4003558011533",name:"Radius_Led",location:"30"},
+{ean:"4003558011571",name:"Radius_Led",location:"31"},
+{ean:"4003558011533",name:"Radius_Led",location:"32"},
+{ean:"4003558011571",name:"Radius_Led",location:"33"},
+{ean:"4003558011656",name:"Radius_Led",location:"34"},
+{ean:"4003558012189",name:"Radius_Led",location:"35"},
+{ean:"4003558011731",name:"Radius_Led",location:"36"},
+{ean:"4003558012196",name:"Radius_Led",location:"37"},
+{ean:"4003558012196",name:"Radius_Led",location:"38"},
+{ean:"4003558012257",name:"Radius_Led",location:"39"},
+{ean:"4003558012257",name:"Radius_Led",location:"40"},
+{ean:"4003558011427",name:"Radius_Led",location:"41"},
+{ean:"4003558011427",name:"Radius_Led",location:"42"},
+{ean:"4003558011502",name:"Radius_Led",location:"43"},
+{ean:"4003558011540",name:"Radius_Led",location:"44"},
+{ean:"4003558011502",name:"Radius_Led",location:"45"},
+{ean:"4003558011540",name:"Radius_Led",location:"46"},
+{ean:"4003558011588",name:"Radius_Led",location:"47"},
+{ean:"4003558011588",name:"Radius_Led",location:"48"},
+{ean:"4003558011663",name:"Radius_Led",location:"49"},
+{ean:"4003558012196",name:"Radius_Led",location:"50"},
+{ean:"4003558011748",name:"Radius_Led",location:"51"},
+{ean:"4003558012202",name:"Radius_Led",location:"52"},
+{ean:"4003558012424",name:"Radius_Led",location:"53"},
+{ean:"4003558012226",name:"Radius_Led",location:"54"},
+{ean:"4003558012257",name:"Radius_Led",location:"55"},
+{ean:"4003558014084",name:"Radius_Led",location:"56"},
+{ean:"4003558014084",name:"Radius_Led",location:"57"},
+{ean:"4003558014107",name:"Radius_Led",location:"58"},
+{ean:"4003558014107",name:"Radius_Led",location:"59"},
+{ean:"4003558014114",name:"Radius_Led",location:"60"},
+{ean:"4003558014114",name:"Radius_Led",location:"61"},
+{ean:"4003558012196",name:"Radius_Led",location:"62"},
+{ean:"4003558014145",name:"Radius_Led",location:"63"},
+{ean:"4003558014121",name:"Radius_Led",location:"64"},
+{ean:"5410288292380",name:"Sylvania",location:"1"},
+{ean:"5410288292397",name:"Sylvania",location:"2"},
+{ean:"5410288292403",name:"Sylvania",location:"3"},
+{ean:"5410288296678",name:"Sylvania",location:"4"},
+{ean:"5410288296715",name:"Sylvania",location:"5"},
+{ean:"5410288296661",name:"Sylvania",location:"6"},
+{ean:"5410288296708",name:"Sylvania",location:"7"},
+{ean:"5410288292250",name:"Sylvania",location:"8"},
+{ean:"5410288292243",name:"Sylvania",location:"9"},
+{ean:"5410288296753",name:"Sylvania",location:"10"},
+{ean:"5410288294940",name:"Sylvania",location:"11"},
+{ean:"5410288293189",name:"Sylvania",location:"12"},
+{ean:"5410288292014",name:"Sylvania",location:"13"},
+{ean:"5410288291192",name:"Sylvania",location:"14"},
+{ean:"5410288291208",name:"Sylvania",location:"15"},
+{ean:"5410288291741",name:"Sylvania",location:"16"},
+{ean:"5410288291826",name:"Sylvania",location:"17"},
+{ean:"5410288291895",name:"Sylvania",location:"18"},
+{ean:"5410288295770",name:"Sylvania",location:"19"},
+{ean:"5410288295770",name:"Sylvania",location:"20"},
+{ean:"5410288295855",name:"Sylvania",location:"21"},
+{ean:"5410288295909",name:"Sylvania",location:"22"},
+{ean:"5410288295947",name:"Sylvania",location:"23"},
+{ean:"5410288296258",name:"Sylvania",location:"24"},
+{ean:"5410288296265",name:"Sylvania",location:"25"},
+{ean:"5410288296272",name:"Sylvania",location:"26"},
+{ean:"5410288296289",name:"Sylvania",location:"27"},
+{ean:"5410288296326",name:"Sylvania",location:"28"},
+{ean:"5410288296333",name:"Sylvania",location:"29"},
+{ean:"5410288296340",name:"Sylvania",location:"30"},
+{ean:"5410288296357",name:"Sylvania",location:"31"},
+{ean:"5410288295626",name:"Sylvania",location:"32"},
+{ean:"5410288295633",name:"Sylvania",location:"33"},
+{ean:"5410288295688",name:"Sylvania",location:"34"},
+{ean:"5410288295695",name:"Sylvania",location:"35"},
+{ean:"5410288296043",name:"Sylvania",location:"36"},
+{ean:"5410288296104",name:"Sylvania",location:"37"},
+{ean:"5410288296159",name:"Sylvania",location:"38"},
+{ean:"5410288269030",name:"Sylvania",location:"39"},
+{ean:"5410288291949",name:"Sylvania",location:"40"},
+{ean:"5410288291956",name:"Sylvania",location:"41"},
+{ean:"5410288292038",name:"Sylvania",location:"42"},
+{ean:"5410288292045",name:"Sylvania",location:"43"},
+{ean:"5410288292069",name:"Sylvania",location:"44"},
+{ean:"5410288292076",name:"Sylvania",location:"45"},
+{ean:"5410288292090",name:"Sylvania",location:"46"},
 {ean:"4020058851263",name:"specjale",location:"1"},
 {ean:"4020058802253",name:"specjale",location:"3"},
 {ean:"4306517617173",name:"specjale",location:"4"},
@@ -674,39 +971,77 @@ const BUILTIN_DB = [
 {ean:"4306517803176",name:"specjale",location:"58"},
 {ean:"4306517803183",name:"specjale",location:"59"},
 {ean:"4306517803190",name:"specjale",location:"60"},
+{ean:"4306511900144",name:"specjale",location:"61"},
+{ean:"4020058851222",name:"specjale",location:"62"},
 {ean:"4306517706018",name:"specjale",location:"63"},
 {ean:"4020058851263",name:"specjale",location:"64"},
 {ean:"4306517706025",name:"specjale",location:"65"},
 {ean:"4306517706032",name:"specjale",location:"66"},
 {ean:"4306517706049",name:"specjale",location:"67"},
 {ean:"4306517706056",name:"specjale",location:"68"},
-{ean:"4020058853305",name:"specjale",location:"69"},
-{ean:"4306517706018",name:"specjale",location:"62"},
-{ean:"4306511900144",name:"specjale",location:"61"},
-{ean:"4306517803188",name:"specjale",location:"56"},
-{ean:"4020058851222",name:"specjale",location:"62"},
-{ean:"4306517800007",name:"specjale",location:"54"},
-{ean:"4306517706063",name:"specjale",location:"82"},
-{ean:"4306517706070",name:"specjale",location:"83"},
-{ean:"4306517706087",name:"specjale",location:"84"},
-{ean:"4306517706094",name:"specjale",location:"85"},
-{ean:"4306517706100",name:"specjale",location:"86"},
-{ean:"4306517706117",name:"specjale",location:"87"},
-{ean:"4306517706124",name:"specjale",location:"88"},
-{ean:"4020058853305",name:"specjale",location:"89"},
-// SYLVANIA
-{ean:"5410288292380",name:"Sylvania",location:"1"},{ean:"5410288292397",name:"Sylvania",location:"2"},{ean:"5410288292403",name:"Sylvania",location:"3"},{ean:"5410288296678",name:"Sylvania",location:"4"},{ean:"5410288296715",name:"Sylvania",location:"5"},{ean:"5410288296661",name:"Sylvania",location:"6"},{ean:"5410288296708",name:"Sylvania",location:"7"},{ean:"5410288292250",name:"Sylvania",location:"8"},{ean:"5410288292243",name:"Sylvania",location:"9"},{ean:"5410288296753",name:"Sylvania",location:"10"},{ean:"5410288294940",name:"Sylvania",location:"11"},{ean:"5410288293189",name:"Sylvania",location:"12"},{ean:"5410288292014",name:"Sylvania",location:"13"},{ean:"5410288291192",name:"Sylvania",location:"14"},{ean:"5410288291208",name:"Sylvania",location:"15"},{ean:"5410288291741",name:"Sylvania",location:"16"},{ean:"5410288291826",name:"Sylvania",location:"17"},{ean:"5410288291895",name:"Sylvania",location:"18"},{ean:"5410288295770",name:"Sylvania",location:"19"},{ean:"5410288295770",name:"Sylvania",location:"20"},{ean:"5410288295855",name:"Sylvania",location:"21"},{ean:"5410288295909",name:"Sylvania",location:"22"},{ean:"5410288295947",name:"Sylvania",location:"23"},{ean:"5410288296258",name:"Sylvania",location:"24"},{ean:"5410288296265",name:"Sylvania",location:"25"},{ean:"5410288296272",name:"Sylvania",location:"26"},{ean:"5410288296289",name:"Sylvania",location:"27"},{ean:"5410288296326",name:"Sylvania",location:"28"},{ean:"5410288296333",name:"Sylvania",location:"29"},{ean:"5410288296340",name:"Sylvania",location:"30"},{ean:"5410288296357",name:"Sylvania",location:"31"},{ean:"5410288295626",name:"Sylvania",location:"32"},{ean:"5410288295633",name:"Sylvania",location:"33"},{ean:"5410288295688",name:"Sylvania",location:"34"},{ean:"5410288295695",name:"Sylvania",location:"35"},{ean:"5410288296043",name:"Sylvania",location:"36"},{ean:"5410288296104",name:"Sylvania",location:"37"},{ean:"5410288296159",name:"Sylvania",location:"38"},{ean:"5410288269030",name:"Sylvania",location:"39"},{ean:"5410288291949",name:"Sylvania",location:"40"},{ean:"5410288291956",name:"Sylvania",location:"41"},{ean:"5410288292038",name:"Sylvania",location:"42"},{ean:"5410288292045",name:"Sylvania",location:"43"},{ean:"5410288292069",name:"Sylvania",location:"44"},{ean:"5410288292076",name:"Sylvania",location:"45"},{ean:"5410288292090",name:"Sylvania",location:"46"},
+{ean:"4020058853305",name:"specjale",location:"69"}
 ];
 
+
 function preloadBuiltinDB() {
-  if(localStorage.getItem('mag_preloaded_v2')) return;
+  if(localStorage.getItem('mag_preloaded_v3')) return;
   localStorage.removeItem('mag_v2');
   db = [];
   for(const item of BUILTIN_DB) {
     db.push({ean:item.ean, name:item.name, location:item.location, quantity:0, price:0});
   }
   saveDB();
-  localStorage.setItem('mag_preloaded_v2','1');
+  localStorage.setItem('mag_preloaded_v3','1');
+}
+
+// ─── BARCODE SCANNER (ZXing) ───────────────────────────────────────────────
+let barcodeScanner = null;
+let scannerActive = false;
+
+async function toggleBarcodeScanner() {
+  if (scannerActive) {
+    stopBarcodeScanner();
+    return;
+  }
+  const wrap = document.getElementById('scanner-wrap');
+  const btn = document.getElementById('scan-barcode-btn');
+  wrap.style.display = 'block';
+  btn.textContent = '⏹ Zatrzymaj skaner';
+  scannerActive = true;
+
+  try {
+    const { BrowserMultiFormatReader } = ZXing;
+    barcodeScanner = new BrowserMultiFormatReader();
+    const video = document.getElementById('scanner-video');
+    const devices = await ZXing.BrowserMultiFormatReader.listVideoInputDevices();
+    const backCam = devices.find(d => d.label.toLowerCase().includes('back') || d.label.toLowerCase().includes('rear')) || devices[devices.length - 1];
+    const deviceId = backCam ? backCam.deviceId : undefined;
+
+    barcodeScanner.decodeFromVideoDevice(deviceId, video, (result, err) => {
+      if (result) {
+        const ean = result.getText();
+        document.getElementById('f-ean').value = ean;
+        document.getElementById('scan-result-bar').style.display = 'block';
+        document.getElementById('scan-result-bar').textContent = '✅ Zeskanowano: ' + ean;
+        speak('Zeskanowano ' + ean.slice(-4));
+        stopBarcodeScanner();
+        document.getElementById('f-name').focus();
+      }
+    });
+  } catch(e) {
+    document.getElementById('scan-result-bar').style.display = 'block';
+    document.getElementById('scan-result-bar').textContent = '⚠️ Brak dostępu do kamery lub kamera niedostępna';
+    document.getElementById('scan-result-bar').style.background = '#FFEBEE';
+    document.getElementById('scan-result-bar').style.color = '#C62828';
+    stopBarcodeScanner();
+  }
+}
+
+function stopBarcodeScanner() {
+  scannerActive = false;
+  if (barcodeScanner) { try { barcodeScanner.reset(); } catch(e) {} barcodeScanner = null; }
+  document.getElementById('scanner-wrap').style.display = 'none';
+  document.getElementById('scan-barcode-btn').innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:22px;height:22px"><rect x="2" y="4" width="4" height="16"/><rect x="8" y="4" width="2" height="16"/><rect x="12" y="4" width="4" height="16"/><rect x="18" y="4" width="4" height="16"/></svg> Skanuj kod kreskowy aparatem`;
 }
 
 // ─── INIT ──────────────────────────────────────────────────────────────────
