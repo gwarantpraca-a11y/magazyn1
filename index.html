@@ -6,499 +6,221 @@
 <meta name="theme-color" content="#0C447C"/>
 <meta name="mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
 <meta name="apple-mobile-web-app-title" content="Magazyn"/>
 <link rel="manifest" href="manifest.json"/>
-<script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.19.1/umd/index.min.js"></script>
 <title>Magazyn</title>
 <style>
-  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-  html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0C447C;overflow:hidden}
-  #app{display:flex;flex-direction:column;height:100vh;height:100dvh;background:#F0F4F8}
-
-  /* TOP BAR */
-  .topbar{background:#0C447C;padding:env(safe-area-inset-top,12px) 16px 14px;color:#fff;flex-shrink:0}
-  .topbar-row{display:flex;align-items:center;justify-content:space-between;margin-top:8px}
-  .topbar h1{font-size:20px;font-weight:600;letter-spacing:-0.3px}
-  .mic-status-dot{width:10px;height:10px;border-radius:50%;background:#4CAF50;display:inline-block;margin-right:6px;animation:blink 1.5s infinite}
-  .mic-status-dot.off{background:#888;animation:none}
-  @keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
-  .status-text{font-size:13px;opacity:0.85;display:flex;align-items:center}
-  .badge{background:rgba(255,255,255,0.18);border-radius:20px;padding:3px 10px;font-size:12px}
-
-  /* BIG MIC BUTTON */
-  .mic-section{background:#0C447C;padding:0 16px 20px;flex-shrink:0}
-  .mic-btn{width:100%;padding:18px;border-radius:16px;border:none;font-size:17px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;transition:transform 0.1s,background 0.2s}
-  .mic-btn.listening{background:#C62828;color:#fff}
-  .mic-btn.stopped{background:#1565C0;color:#fff}
-  .mic-btn:active{transform:scale(0.97)}
-  .mic-icon{width:24px;height:24px;flex-shrink:0}
-
-  /* RESULT */
-  .result-wrap{padding:12px 16px;flex-shrink:0}
-  .result-card{border-radius:16px;padding:16px;display:none}
-  .result-card.found{background:#E3F2FD;border:1.5px solid #90CAF9;display:block}
-  .result-card.notfound{background:#FFEBEE;border:1.5px solid #EF9A9A;display:block}
-  .result-name{font-size:17px;font-weight:600;color:#0D2B4E;margin-bottom:8px}
-  .result-loc-label{font-size:10px;color:#1565C0;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:2px}
-  .result-loc{font-size:44px;font-weight:700;color:#0C447C;font-family:monospace;line-height:1;margin-bottom:8px}
-  .result-meta{display:flex;gap:8px;flex-wrap:wrap}
-  .meta-chip{background:rgba(21,101,192,0.12);color:#0D47A1;border-radius:20px;padding:4px 12px;font-size:13px}
-  .notfound-title{font-size:16px;font-weight:600;color:#B71C1C;margin-bottom:4px}
-  .notfound-sub{font-size:13px;color:#C62828}
-
-  /* HEARD */
-  .heard-row{padding:6px 16px 2px;display:flex;align-items:center;gap:8px;flex-shrink:0}
-  .heard-label{font-size:12px;color:#888}
-  .heard-val{font-size:18px;font-weight:700;font-family:monospace;color:#0C447C;letter-spacing:0.1em}
-
-  /* TABS */
-  .tabs{display:flex;border-bottom:1px solid #E0E0E0;background:#fff;flex-shrink:0}
-  .tab{flex:1;padding:12px 4px;border:none;background:none;font-size:13px;font-weight:500;color:#888;cursor:pointer;border-bottom:2px solid transparent;transition:color 0.15s}
-  .tab.active{color:#0C447C;border-bottom-color:#0C447C}
-
-  /* PANELS */
-  .panel{display:none;flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
-  .panel.active{display:block}
-
-  /* ADD FORM */
-  .form-wrap{padding:16px}
-  .photo-btn-row{display:flex;gap:8px;margin-bottom:14px}
-  .photo-btn{flex:1;padding:14px 8px;border-radius:12px;border:none;font-size:14px;font-weight:600;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px}
-  .photo-btn.cam{background:#0C447C;color:#fff}
-  .photo-btn.gal{background:#1565C0;color:#fff}
-  .photo-btn svg{width:22px;height:22px}
-  #preview-img{width:100%;border-radius:12px;max-height:160px;object-fit:cover;display:none;margin-bottom:10px}
-  .ai-bar{background:#E3F2FD;border-radius:10px;padding:10px 14px;font-size:13px;color:#0D47A1;margin-bottom:10px;display:none;text-align:center}
-  .field{margin-bottom:12px}
-  .field label{display:block;font-size:12px;color:#666;margin-bottom:4px;font-weight:500}
-  .field input{width:100%;padding:12px;border:1.5px solid #DDD;border-radius:10px;font-size:15px;background:#FAFAFA;color:#111;-webkit-appearance:none}
-  .field input:focus{outline:none;border-color:#0C447C;background:#fff}
-  .field-row{display:flex;gap:10px}
-  .field-row .field{flex:1}
-  .save-btn{width:100%;padding:15px;background:#0C447C;color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;margin-top:4px}
-  .save-btn:active{background:#083566}
-  .divider{height:1px;background:#EEE;margin:16px 0}
-  .section-title{font-size:12px;color:#888;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:10px;font-weight:600}
-  .csv-area{background:#F5F5F5;border-radius:10px;padding:12px;margin-bottom:10px;font-size:12px;color:#555;line-height:1.6}
-  .csv-area code{background:#E0E0E0;padding:1px 5px;border-radius:4px;font-size:11px}
-  .import-btn{width:100%;padding:13px;background:#2E7D32;color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer}
-  #csv-file-input,#photo-input,#gallery-input{display:none}
-
-  /* LIST */
-  .list-wrap{padding:10px 12px}
-  .list-search{padding:10px 12px;position:sticky;top:0;background:#F0F4F8;z-index:2;border-bottom:1px solid #E0E0E0}
-  .list-search input{width:100%;padding:10px 14px;border:1.5px solid #DDD;border-radius:10px;font-size:15px;background:#fff;-webkit-appearance:none}
-  .list-search input:focus{outline:none;border-color:#0C447C}
-  .item-card{background:#fff;border-radius:12px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:12px;border:0.5px solid #E8E8E8}
-  .item-loc{background:#E3F2FD;color:#0C447C;border-radius:8px;padding:6px 10px;font-family:monospace;font-size:16px;font-weight:700;min-width:52px;text-align:center;flex-shrink:0}
-  .item-info{flex:1;min-width:0}
-  .item-name{font-size:14px;font-weight:600;color:#111;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .item-ean{font-size:11px;color:#999;font-family:monospace;margin-top:1px}
-  .item-qty{font-size:12px;color:#666;margin-top:1px}
-  .item-del{background:none;border:none;padding:8px;color:#CCC;font-size:18px;cursor:pointer;border-radius:8px;flex-shrink:0}
-  .item-del:active{background:#FFEBEE;color:#C62828}
-  .empty-state{text-align:center;padding:40px 20px;color:#AAA;font-size:15px}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0C447C;overflow:hidden}
+#app{display:flex;flex-direction:column;height:100vh;height:100dvh;background:#F0F4F8}
+.topbar{background:#0C447C;padding:env(safe-area-inset-top,12px) 16px 14px;color:#fff;flex-shrink:0}
+.topbar-row{display:flex;align-items:center;justify-content:space-between;margin-top:8px}
+.topbar h1{font-size:20px;font-weight:600}
+.mic-status-dot{width:10px;height:10px;border-radius:50%;background:#4CAF50;display:inline-block;margin-right:6px;animation:blink 1.5s infinite}
+.mic-status-dot.off{background:#888;animation:none}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
+.status-text{font-size:13px;opacity:0.85;display:flex;align-items:center}
+.badge{background:rgba(255,255,255,0.18);border-radius:20px;padding:3px 10px;font-size:12px}
+.mic-section{background:#0C447C;padding:0 16px 20px;flex-shrink:0}
+.mic-btn{width:100%;padding:18px;border-radius:16px;border:none;font-size:17px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;transition:transform 0.1s}
+.mic-btn.listening{background:#C62828;color:#fff}
+.mic-btn.stopped{background:#1565C0;color:#fff}
+.mic-btn:active{transform:scale(0.97)}
+.result-wrap{padding:12px 16px;flex-shrink:0}
+.result-card{border-radius:16px;padding:16px;display:none}
+.result-card.found{background:#E3F2FD;border:1.5px solid #90CAF9;display:block}
+.result-card.notfound{background:#FFEBEE;border:1.5px solid #EF9A9A;display:block}
+.result-name{font-size:17px;font-weight:600;color:#0D2B4E;margin-bottom:8px}
+.result-loc-label{font-size:10px;color:#1565C0;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:2px}
+.result-loc{font-size:44px;font-weight:700;color:#0C447C;font-family:monospace;line-height:1;margin-bottom:8px}
+.notfound-title{font-size:16px;font-weight:600;color:#B71C1C;margin-bottom:4px}
+.notfound-sub{font-size:13px;color:#C62828}
+.heard-row{padding:6px 16px 2px;display:flex;align-items:center;gap:8px;flex-shrink:0}
+.heard-label{font-size:12px;color:#888}
+.heard-val{font-size:18px;font-weight:700;font-family:monospace;color:#0C447C;letter-spacing:0.1em}
+.tabs{display:flex;border-bottom:1px solid #E0E0E0;background:#fff;flex-shrink:0}
+.tab{flex:1;padding:12px 4px;border:none;background:none;font-size:13px;font-weight:500;color:#888;cursor:pointer;border-bottom:2px solid transparent}
+.tab.active{color:#0C447C;border-bottom-color:#0C447C}
+.panel{display:none;flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.panel.active{display:block}
+.form-wrap{padding:16px}
+.section-title{font-size:12px;color:#888;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:10px;font-weight:600}
+.field{margin-bottom:12px}
+.field label{display:block;font-size:12px;color:#666;margin-bottom:4px;font-weight:500}
+.field input{width:100%;padding:12px;border:1.5px solid #DDD;border-radius:10px;font-size:15px;background:#FAFAFA;color:#111;-webkit-appearance:none}
+.field input:focus{outline:none;border-color:#0C447C;background:#fff}
+.save-btn{width:100%;padding:15px;background:#0C447C;color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;margin-top:4px}
+.divider{height:1px;background:#EEE;margin:16px 0}
+.csv-area{background:#F5F5F5;border-radius:10px;padding:12px;margin-bottom:10px;font-size:12px;color:#555;line-height:1.6}
+.csv-area code{background:#E0E0E0;padding:1px 5px;border-radius:4px;font-size:11px}
+.import-btn{width:100%;padding:13px;background:#2E7D32;color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer}
+#csv-file-input,#csv-list-input{display:none}
+.list-search{padding:10px 12px;position:sticky;top:0;background:#F0F4F8;z-index:2;border-bottom:1px solid #E0E0E0}
+.list-search input{width:100%;padding:10px 14px;border:1.5px solid #DDD;border-radius:10px;font-size:15px;background:#fff;-webkit-appearance:none}
+.list-search input:focus{outline:none;border-color:#0C447C}
+.list-wrap{padding:10px 12px}
+.list-group-header{font-size:12px;font-weight:600;color:#0C447C;text-transform:uppercase;letter-spacing:0.06em;padding:6px 4px 4px;border-bottom:2px solid #E3F2FD;margin-bottom:6px;margin-top:14px}
+.item-card{background:#fff;border-radius:12px;padding:10px 14px;margin-bottom:6px;display:flex;align-items:center;gap:12px;border:0.5px solid #E8E8E8}
+.item-loc{background:#E3F2FD;color:#0C447C;border-radius:8px;padding:6px 10px;font-family:monospace;font-size:16px;font-weight:700;min-width:52px;text-align:center;flex-shrink:0}
+.item-info{flex:1;min-width:0}
+.item-ean{font-size:13px;font-family:monospace;color:#333}
+.item-del{background:none;border:none;padding:8px;color:#CCC;font-size:18px;cursor:pointer;border-radius:8px;flex-shrink:0}
+.empty-state{text-align:center;padding:40px 20px;color:#AAA;font-size:15px}
+.import-result{display:none;margin-top:12px;background:#E8F5E9;border-radius:10px;padding:12px;font-size:14px;color:#2E7D32;font-weight:600}
+.info-box{background:#E3F2FD;border-radius:14px;padding:16px;margin-bottom:14px;font-size:13px;color:#1565C0;line-height:1.8}
 </style>
 </head>
 <body>
 <div id="app">
-
   <div class="topbar">
-    <h1>📦 Asystent Magazynowy</h1>
+    <h1>Magazyn</h1>
     <div class="topbar-row">
-      <div class="status-text">
-        <span class="mic-status-dot" id="mic-dot"></span>
-        <span id="status-label">Nasłuchiwanie aktywne</span>
-      </div>
+      <div class="status-text"><span class="mic-status-dot" id="mic-dot"></span><span id="status-label">Nasłuchiwanie aktywne</span></div>
       <span class="badge" id="db-count">0 towarów</span>
     </div>
   </div>
-
   <div class="mic-section">
     <button class="mic-btn listening" id="mic-btn" onclick="toggleListening()">
-      <svg class="mic-icon" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M12 1a4 4 0 0 1 4 4v6a4 4 0 0 1-8 0V5a4 4 0 0 1 4-4zm-1 17.93V21h-2v2h6v-2h-2v-2.07A8 8 0 0 0 20 11h-2a6 6 0 0 1-12 0H4a8 8 0 0 0 7 7.93z"/>
-      </svg>
+      <svg style="width:24px;height:24px;flex-shrink:0" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1a4 4 0 0 1 4 4v6a4 4 0 0 1-8 0V5a4 4 0 0 1 4-4zm-1 17.93V21h-2v2h6v-2h-2v-2.07A8 8 0 0 0 20 11h-2a6 6 0 0 1-12 0H4a8 8 0 0 0 7 7.93z"/></svg>
       <span id="mic-btn-label">ZATRZYMAJ NASŁUCHIWANIE</span>
     </button>
   </div>
-
-  <div class="heard-row">
-    <span class="heard-label">Ostatnio słyszę:</span>
-    <span class="heard-val" id="heard-val">—</span>
-  </div>
-
-  <div class="result-wrap">
-    <div id="result-card" class="result-card"></div>
-  </div>
-
+  <div class="heard-row"><span class="heard-label">Ostatnio słyszę:</span><span class="heard-val" id="heard-val">—</span></div>
+  <div class="result-wrap"><div id="result-card" class="result-card"></div></div>
   <div class="tabs">
-    <button class="tab active" onclick="showTab('add')" id="tab-add">➕ Dodaj</button>
-    <button class="tab" onclick="showTab('scan-list')" id="tab-scan-list">📷 Zdjęcie listy</button>
-    <button class="tab" onclick="showTab('list')" id="tab-list">📋 Lista</button>
+    <button class="tab active" onclick="showTab('add')" id="tab-add">Dodaj</button>
+    <button class="tab" onclick="showTab('scan-list')" id="tab-scan-list">Import listy</button>
+    <button class="tab" onclick="showTab('list')" id="tab-list">Lista</button>
   </div>
-
   <div id="panel-add" class="panel active">
     <div class="form-wrap">
-
-      <div class="section-title">Skanuj kod kreskowy</div>
-      <button class="photo-btn cam" id="scan-barcode-btn" onclick="toggleBarcodeScanner()" style="width:100%;margin-bottom:12px">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:22px;height:22px"><rect x="2" y="4" width="4" height="16"/><rect x="8" y="4" width="2" height="16"/><rect x="12" y="4" width="4" height="16"/><rect x="18" y="4" width="4" height="16"/></svg>
-        Skanuj kod kreskowy aparatem
-      </button>
-      <div id="scanner-wrap" style="display:none;margin-bottom:12px;border-radius:12px;overflow:hidden;background:#000;position:relative">
-        <video id="scanner-video" style="width:100%;display:block;max-height:220px;object-fit:cover"></video>
-        <div style="position:absolute;top:50%;left:10%;right:10%;height:2px;background:#FF3D00;transform:translateY(-50%);pointer-events:none"></div>
-        <button onclick="toggleBarcodeScanner()" style="position:absolute;top:8px;right:8px;background:rgba(0,0,0,0.6);color:#fff;border:none;border-radius:20px;padding:6px 14px;font-size:13px">Zamknij</button>
-      </div>
-      <div id="scan-result-bar" style="display:none;background:#E3F2FD;border-radius:10px;padding:10px 14px;font-size:13px;color:#0D47A1;margin-bottom:12px"></div>
-
-      <div class="divider"></div>
       <div class="section-title">Dodaj ręcznie</div>
-
-      <div class="field">
-        <label>Kod EAN *</label>
-        <input id="f-ean" type="text" inputmode="numeric" placeholder="np. 5901234567890"/>
-      </div>
-      <div class="field">
-        <label>Nazwa / lista *</label>
-        <input id="f-name" type="text" placeholder="np. Flair_str_1"/>
-      </div>
-      <div class="field">
-        <label>Pozycja (nr na liście) *</label>
-        <input id="f-loc" type="text" inputmode="numeric" placeholder="np. 42"/>
-      </div>
-      <div class="field-row">
-        <div class="field">
-          <label>Ilość (szt.)</label>
-          <input id="f-qty" type="number" inputmode="numeric" placeholder="0"/>
-        </div>
-        <div class="field">
-          <label>Cena (zł)</label>
-          <input id="f-price" type="number" inputmode="decimal" placeholder="0.00"/>
-        </div>
-      </div>
+      <div class="field"><label>Kod EAN *</label><input id="f-ean" type="text" inputmode="numeric" placeholder="np. 5901234567890"/></div>
+      <div class="field"><label>Nazwa listy *</label><input id="f-name" type="text" placeholder="np. Flair_str_1"/></div>
+      <div class="field"><label>Pozycja *</label><input id="f-loc" type="text" inputmode="numeric" placeholder="np. 42"/></div>
       <button class="save-btn" onclick="saveItem()">Zapisz towar</button>
-
       <div class="divider"></div>
       <div class="section-title">Import z pliku CSV</div>
-      <div class="csv-area">
-        Format: <code>ean,nazwa_listy,pozycja,ilosc,cena</code><br/>
-        Przykład: <code>4306517597832,Flair_str_1,1,0,0</code>
-      </div>
+      <div class="csv-area">Format: <code>ean,nazwa_listy,pozycja,ilosc,cena</code></div>
       <input type="file" id="csv-file-input" accept=".csv,text/plain" onchange="importCSV(event)"/>
-      <button class="import-btn" onclick="document.getElementById('csv-file-input').click()">📂 Wybierz plik CSV</button>
+      <button class="import-btn" onclick="document.getElementById('csv-file-input').click()">Wybierz plik CSV</button>
     </div>
   </div>
-
   <div id="panel-scan-list" class="panel">
     <div class="form-wrap">
       <div class="section-title">Dodaj listę towarów</div>
-
-      <div style="background:#E3F2FD;border-radius:14px;padding:16px;margin-bottom:14px">
-        <div style="font-size:14px;font-weight:600;color:#0C447C;margin-bottom:8px">Jak wczytać nową listę:</div>
-        <div style="font-size:13px;color:#1565C0;line-height:1.8">
-          1. Zrób zdjęcie wydruku<br/>
-          2. Wrzuć zdjęcie do <b>claude.ai</b><br/>
-          3. Napisz: <i>"zrób CSV z tej listy"</i><br/>
-          4. Pobierz CSV i wgraj poniżej
-        </div>
+      <div class="info-box">
+        1. Zrób zdjęcie wydruku<br/>
+        2. Wrzuć zdjęcie do <b>claude.ai</b><br/>
+        3. Napisz: "zrób CSV z tej listy"<br/>
+        4. Pobierz CSV i wgraj poniżej
       </div>
-
-      <div class="csv-area" style="margin-bottom:10px">
-        Format CSV: <code>ean,nazwa_listy,pozycja,ilosc,cena</code><br/>
-        Przykład: <code>4306517597832,Flair_str_1,1,0,0</code>
-      </div>
+      <div class="csv-area" style="margin-bottom:10px">Format CSV: <code>ean,nazwa_listy,pozycja,ilosc,cena</code></div>
       <input type="file" id="csv-list-input" accept=".csv,text/plain" onchange="importCSVList(event)"/>
-      <button class="import-btn" onclick="document.getElementById('csv-list-input').click()">
-        📂 Wgraj plik CSV z listą
-      </button>
-
-      <div id="import-result" style="display:none;margin-top:12px;background:#E8F5E9;border-radius:10px;padding:12px;font-size:14px;color:#2E7D32;font-weight:600"></div>
+      <button class="import-btn" onclick="document.getElementById('csv-list-input').click()">Wgraj plik CSV z listą</button>
+      <div class="import-result" id="import-result"></div>
     </div>
   </div>
-
   <div id="panel-list" class="panel">
-    <div class="list-search">
-      <input id="search-input" type="text" placeholder="Szukaj towaru..." oninput="renderList()"/>
-    </div>
+    <div class="list-search"><input id="search-input" type="text" placeholder="Szukaj po EAN lub liście..." oninput="renderList()"/></div>
     <div class="list-wrap" id="list-wrap"></div>
   </div>
-
 </div>
-
 <script>
-// ─── DATABASE (localStorage) ───────────────────────────────────────────────
-let db = [];
-function loadDB() { try { db = JSON.parse(localStorage.getItem('mag_v2') || '[]'); } catch(e){ db=[]; } updateCount(); }
-function saveDB() { localStorage.setItem('mag_v2', JSON.stringify(db)); updateCount(); }
-function updateCount() { document.getElementById('db-count').textContent = db.length + ' towarów'; }
-
-// ─── TAB SWITCH ────────────────────────────────────────────────────────────
-function showTab(name) {
-  ['add','scan-list','list'].forEach(t => {
-    document.getElementById('panel-'+t).classList.toggle('active', t===name);
-    document.getElementById('tab-'+t).classList.toggle('active', t===name);
-  });
-  if(name==='list') renderList();
-}
-
-// ─── SPEECH RECOGNITION ────────────────────────────────────────────────────
-const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-let recognition = null;
-let listening = false;
-let restartTimer = null;
-
-function toggleListening() {
-  if(listening) { stopListening(true); }
-  else { startListening(); }
-}
-
-function startListening() {
-  if(!SR) { alert('Twoja przeglądarka nie obsługuje rozpoznawania mowy.\nUżyj Chrome na Androidzie.'); return; }
-  if(recognition) { try{recognition.abort();}catch(e){} }
-  recognition = new SR();
-  recognition.lang = 'pl-PL';
-  recognition.continuous = false;
-  recognition.interimResults = true;
-  recognition.maxAlternatives = 3;
-
-  recognition.onstart = () => {
-    listening = true;
-    updateMicUI(true);
+let db=[];
+function loadDB(){try{db=JSON.parse(localStorage.getItem('mag_v2')||'[]');}catch(e){db=[];}updateCount();}
+function saveDB(){localStorage.setItem('mag_v2',JSON.stringify(db));updateCount();}
+function updateCount(){document.getElementById('db-count').textContent=db.length+' towarów';}
+function showTab(n){['add','scan-list','list'].forEach(t=>{document.getElementById('panel-'+t).classList.toggle('active',t===n);document.getElementById('tab-'+t).classList.toggle('active',t===n);});if(n==='list')renderList();}
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+let recognition=null,listening=false,restartTimer=null;
+function toggleListening(){if(listening)stopListening();else startListening();}
+function startListening(){
+  if(!SR){alert('Użyj Chrome na Androidzie');return;}
+  if(recognition){try{recognition.abort();}catch(e){}}
+  recognition=new SR();recognition.lang='pl-PL';recognition.continuous=false;recognition.interimResults=true;recognition.maxAlternatives=3;
+  recognition.onstart=()=>{listening=true;updateMicUI(true);};
+  recognition.onresult=(e)=>{
+    let interim='',final='';
+    for(let i=e.resultIndex;i<e.results.length;i++){const t=e.results[i][0].transcript;if(e.results[i].isFinal)final+=t;else interim+=t;}
+    const raw=final||interim;const digits=spokenToDigits(raw);
+    if(digits)document.getElementById('heard-val').textContent='...'+digits;
+    if(final&&digits&&digits.length>=2)searchProduct(digits);
   };
-
-  recognition.onresult = (e) => {
-    let interim='', final='';
-    for(let i=e.resultIndex;i<e.results.length;i++){
-      const t=e.results[i][0].transcript;
-      if(e.results[i].isFinal) final+=t; else interim+=t;
-    }
-    const raw=final||interim;
-    const digits = spokenToDigits(raw);
-    if(digits) document.getElementById('heard-val').textContent='...'+digits;
-    if(final && digits && digits.length>=2) {
-      searchProduct(digits);
-    }
-  };
-
-  recognition.onerror = (e) => {
-    if(e.error==='not-allowed') { stopListening(true); alert('Zezwól na dostęp do mikrofonu!'); return; }
-    scheduleRestart(300);
-  };
-
-  recognition.onend = () => {
-    if(listening) scheduleRestart(150);
-  };
-
-  try { recognition.start(); } catch(e) { scheduleRestart(500); }
+  recognition.onerror=(e)=>{if(e.error==='not-allowed'){stopListening();alert('Zezwól na dostęp do mikrofonu!');return;}scheduleRestart(300);};
+  recognition.onend=()=>{if(listening)scheduleRestart(150);};
+  try{recognition.start();}catch(e){scheduleRestart(500);}
 }
-
-function stopListening(manual=false) {
-  listening = false;
-  clearTimeout(restartTimer);
-  try { recognition?.abort(); } catch(e){}
-  updateMicUI(false);
+function stopListening(){listening=false;clearTimeout(restartTimer);try{recognition?.abort();}catch(e){}updateMicUI(false);}
+function scheduleRestart(d){clearTimeout(restartTimer);if(listening)restartTimer=setTimeout(()=>{if(listening)startListening();},d);}
+function updateMicUI(on){
+  document.getElementById('mic-dot').className='mic-status-dot'+(on?'':' off');
+  document.getElementById('mic-btn').className='mic-btn '+(on?'listening':'stopped');
+  document.getElementById('mic-btn-label').textContent=on?'ZATRZYMAJ NASŁUCHIWANIE':'WŁĄCZ NASŁUCHIWANIE';
+  document.getElementById('status-label').textContent=on?'Nasłuchiwanie aktywne':'Nasłuchiwanie zatrzymane';
 }
-
-function scheduleRestart(delay) {
-  clearTimeout(restartTimer);
-  if(listening) restartTimer = setTimeout(() => { if(listening) startListening(); }, delay);
+function spokenToDigits(text){
+  const map={'zero':'0','jeden':'1','jedna':'1','dwa':'2','dwie':'2','trzy':'3','cztery':'4','pięć':'5','piec':'5','sześć':'6','szesc':'6','siedem':'7','osiem':'8','dziewięć':'9','dziewiec':'9'};
+  let result='';const words=text.toLowerCase().trim().split(/\s+/);
+  for(const w of words){if(map[w])result+=map[w];else result+=w.replace(/\D/g,'');}
+  if(!result)result=text.replace(/\D/g,'');return result;
 }
-
-function updateMicUI(on) {
-  const dot = document.getElementById('mic-dot');
-  const btn = document.getElementById('mic-btn');
-  const label = document.getElementById('mic-btn-label');
-  const status = document.getElementById('status-label');
-  dot.className = 'mic-status-dot' + (on?'':' off');
-  btn.className = 'mic-btn ' + (on?'listening':'stopped');
-  label.textContent = on ? 'ZATRZYMAJ NASŁUCHIWANIE' : 'WŁĄCZ NASŁUCHIWANIE';
-  status.textContent = on ? 'Nasłuchiwanie aktywne' : 'Nasłuchiwanie zatrzymane';
-}
-
-// ─── DIGIT CONVERSION ──────────────────────────────────────────────────────
-function spokenToDigits(text) {
-  const map = {
-    'zero':'0','jeden':'1','jedna':'1','jeden':'1',
-    'dwa':'2','dwie':'2','dwa':'2',
-    'trzy':'3','cztery':'4',
-    'pięć':'5','piec':'5','pieć':'5',
-    'sześć':'6','szesc':'6','szesć':'6',
-    'siedem':'7','osiem':'8',
-    'dziewięć':'9','dziewiec':'9','dziewięc':'9'
-  };
-  let result='';
-  const words = text.toLowerCase().trim().split(/\s+/);
-  for(const w of words){
-    if(map[w]) result+=map[w];
-    else result+=w.replace(/\D/g,'');
-  }
-  if(!result) result=text.replace(/\D/g,'');
-  return result;
-}
-
-// ─── SEARCH ────────────────────────────────────────────────────────────────
-function searchProduct(digits) {
-  const matches = db.filter(i => i.ean && i.ean.endsWith(digits));
-  const card = document.getElementById('result-card');
-
-  if(matches.length===0) {
+function searchProduct(digits){
+  const matches=db.filter(i=>i.ean&&i.ean.endsWith(digits));
+  const card=document.getElementById('result-card');
+  if(matches.length===0){
     card.className='result-card notfound';
-    card.innerHTML=`<div class="notfound-title">Nie znaleziono towaru</div><div class="notfound-sub">Kod kończy się na: ...${digits}</div>`;
+    card.innerHTML=`<div class="notfound-title">Nie znaleziono</div><div class="notfound-sub">EAN kończy się na: ...${digits}</div>`;
     speak('Nie znaleziono towaru z tym kodem');
-  } else if(matches.length===1) {
-    const m=matches[0];
-    const loc=m.location||'brak';
-    card.className='result-card found';
-    card.innerHTML=`
-      <div class="result-name">${m.name}</div>
-      <div class="result-loc-label">Lokalizacja</div>
-      <div class="result-loc">${loc}</div>
-      <div class="result-meta">
-        ${m.quantity!=null?`<span class="meta-chip">Ilość: ${m.quantity} szt.</span>`:''}
-        ${m.price?`<span class="meta-chip">${parseFloat(m.price).toFixed(2)} zł</span>`:''}
-      </div>`;
-    speak(`${m.name}. Lokalizacja: ${loc.split('').join(' ')}. Ilość: ${m.quantity||0}`);
+  } else if(matches.length===1){
+    const m=matches[0];card.className='result-card found';
+    card.innerHTML=`<div class="result-name">${m.name}</div><div class="result-loc-label">Pozycja</div><div class="result-loc">${m.location}</div>`;
+    speak(`${m.name}, pozycja ${m.location.split('').join(' ')}`);
   } else {
     card.className='result-card found';
-    card.innerHTML=`<div class="result-name">Znaleziono ${matches.length} towarów (EAN: ...${digits})</div>`+
-      matches.slice(0,5).map(m=>`<div style="display:flex;justify-content:space-between;padding:6px 0;border-top:1px solid #BBDEFB"><span style="font-size:13px">${m.name}</span><span style="font-family:monospace;font-weight:700;color:#0C447C">${m.location||'—'}</span></div>`).join('');
-    speak('Znaleziono '+matches.length+' towarów. '+matches.slice(0,3).map(m=>`${m.name}, lokalizacja ${(m.location||'').split('').join(' ')}`).join('. '));
+    card.innerHTML=`<div class="result-name">Znaleziono ${matches.length} (EAN: ...${digits})</div>`+matches.slice(0,5).map(m=>`<div style="display:flex;justify-content:space-between;padding:6px 0;border-top:1px solid #BBDEFB"><span style="font-size:13px">${m.name}</span><span style="font-family:monospace;font-weight:700;color:#0C447C">${m.location}</span></div>`).join('');
+    speak('Znaleziono '+matches.length+' towarów. '+matches.slice(0,3).map(m=>`${m.name}, pozycja ${m.location.split('').join(' ')}`).join('. '));
   }
 }
-
-// ─── TTS ───────────────────────────────────────────────────────────────────
-function speak(text) {
-  if(!window.speechSynthesis) return;
-  speechSynthesis.cancel();
-  const u = new SpeechSynthesisUtterance(text);
-  u.lang='pl-PL'; u.rate=0.95; u.pitch=1;
-  speechSynthesis.speak(u);
+function speak(text){if(!window.speechSynthesis)return;speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.lang='pl-PL';u.rate=0.95;speechSynthesis.speak(u);}
+function saveItem(){
+  const ean=document.getElementById('f-ean').value.trim(),name=document.getElementById('f-name').value.trim(),loc=document.getElementById('f-loc').value.trim();
+  if(!ean||!name||!loc){alert('Wypełnij wszystkie pola!');return;}
+  db.push({ean,name,location:loc,quantity:0,price:0});saveDB();
+  ['f-ean','f-name','f-loc'].forEach(id=>document.getElementById(id).value='');
+  speak('Zapisano');showTab('list');
 }
-
-// ─── SAVE ITEM ─────────────────────────────────────────────────────────────
-function saveItem() {
-  const ean=document.getElementById('f-ean').value.trim();
-  const name=document.getElementById('f-name').value.trim();
-  const loc=document.getElementById('f-loc').value.trim();
-  const qty=document.getElementById('f-qty').value;
-  const price=document.getElementById('f-price').value;
-  if(!ean||!name||!loc){alert('Wypełnij EAN, nazwę listy i pozycję!');return;}
-  const existing=db.findIndex(i=>i.ean===ean&&i.name===name);
-  const item={ean,name,location:loc,quantity:qty?parseInt(qty):0,price:price?parseFloat(price):0};
-  if(existing>=0) db[existing]=item; else db.push(item);
-  saveDB();
-  ['f-ean','f-name','f-loc','f-qty','f-price'].forEach(id=>document.getElementById(id).value='');
-  speak('Zapisano');
-  showTab('list');
-}
-
-// ─── CSV IMPORT ─────────────────────────────────────────────────────────────
-function importCSV(event) {
-  const file=event.target.files[0]; if(!file) return;
-  event.target.value='';
+function importCSV(event){
+  const file=event.target.files[0];if(!file)return;event.target.value='';
   const reader=new FileReader();
   reader.onload=(e)=>{
-    const lines=e.target.result.split('\n').map(l=>l.trim()).filter(l=>l);
-    let imported=0, skipped=0;
+    const lines=e.target.result.split('\n').map(l=>l.trim()).filter(l=>l);let imported=0;
     const start=lines[0]?.toLowerCase().includes('ean')?1:0;
-    for(let i=start;i<lines.length;i++){
-      const cols=lines[i].split(/[,;]/).map(c=>c.trim().replace(/^"|"$/g,''));
-      if(cols.length<3){skipped++;continue;}
-      const [ean,name,location,qty,price]=cols;
-      if(!ean||!name){skipped++;continue;}
-      db.push({ean,name,location:location||'',quantity:qty?parseInt(qty):0,price:price?parseFloat(price):0});
-      imported++;
-    }
-    saveDB();
-    alert(`Zaimportowano: ${imported} towarów${skipped?'\nPominięto: '+skipped+' wierszy':''}`);
-    showTab('list');
-  };
-  reader.readAsText(file,'UTF-8');
+    for(let i=start;i<lines.length;i++){const cols=lines[i].split(/[,;]/).map(c=>c.trim().replace(/^"|"$/g,''));if(cols.length<3)continue;const[ean,name,location]=cols;if(!ean||!name)continue;db.push({ean,name,location:location||'',quantity:0,price:0});imported++;}
+    saveDB();alert(`Zaimportowano ${imported} towarów`);showTab('list');
+  };reader.readAsText(file,'UTF-8');
 }
-
-// ─── LIST RENDER ────────────────────────────────────────────────────────────
-function renderList() {
+function importCSVList(event){
+  const file=event.target.files[0];if(!file)return;event.target.value='';
+  const reader=new FileReader();
+  reader.onload=(e)=>{
+    const lines=e.target.result.split('\n').map(l=>l.trim()).filter(l=>l);let imported=0;
+    const start=lines[0]?.toLowerCase().includes('ean')?1:0;
+    for(let i=start;i<lines.length;i++){const cols=lines[i].split(/[,;]/).map(c=>c.trim().replace(/^"|"$/g,''));if(cols.length<3)continue;const[ean,name,location]=cols;if(!ean||!name)continue;db.push({ean,name,location:location||'',quantity:0,price:0});imported++;}
+    saveDB();const res=document.getElementById('import-result');res.style.display='block';res.textContent=`Zaimportowano ${imported} pozycji`;speak('Zaimportowano '+imported+' pozycji');setTimeout(()=>showTab('list'),1500);
+  };reader.readAsText(file,'UTF-8');
+}
+function renderList(){
   const q=(document.getElementById('search-input')?.value||'').toLowerCase().trim();
   const wrap=document.getElementById('list-wrap');
-
-  if(db.length===0){
-    wrap.innerHTML='<div class="empty-state">Brak towarów w bazie</div>';
-    return;
-  }
-
-  // grupuj po nazwie listy
+  if(db.length===0){wrap.innerHTML='<div class="empty-state">Brak towarów w bazie</div>';return;}
   const filtered=db.filter(i=>!q||i.name.toLowerCase().includes(q)||i.ean.includes(q)||i.location.includes(q));
-
-  if(filtered.length===0){
-    wrap.innerHTML=`<div class="empty-state">Brak wyników dla: ${q}</div>`;
-    return;
-  }
-
-  // grupuj po name (nazwa listy)
-  const groups={};
-  filtered.forEach(item=>{
-    const key=item.name||'(bez listy)';
-    if(!groups[key]) groups[key]=[];
-    groups[key].push(item);
-  });
-
-  wrap.innerHTML=Object.entries(groups).map(([listName,items])=>`
-    <div style="margin-bottom:16px">
-      <div style="font-size:12px;font-weight:600;color:#0C447C;text-transform:uppercase;letter-spacing:0.06em;padding:6px 4px 4px;border-bottom:2px solid #E3F2FD;margin-bottom:6px">
-        ${listName} <span style="font-weight:400;color:#888">(${items.length} szt.)</span>
-      </div>
-      ${items.map(item=>{
-        const idx=db.indexOf(item);
-        return `<div class="item-card">
-          <div class="item-loc">${item.location||'?'}</div>
-          <div class="item-info">
-            <div class="item-ean">${item.ean}</div>
-          </div>
-          <button class="item-del" onclick="deleteItem(${idx})">✕</button>
-        </div>`;
-      }).join('')}
-    </div>
-  `).join('');
+  if(filtered.length===0){wrap.innerHTML='<div class="empty-state">Brak wyników</div>';return;}
+  const groups={};filtered.forEach(r=>{if(!groups[r.name])groups[r.name]=[];groups[r.name].push(r);});
+  wrap.innerHTML=Object.entries(groups).map(([ln,rows])=>`<div class="list-group-header">${ln} (${rows.length})</div>${rows.map(item=>{const idx=db.indexOf(item);return`<div class="item-card"><div class="item-loc">${item.location||'?'}</div><div class="item-info"><div class="item-ean">${item.ean}</div></div><button class="item-del" onclick="deleteItem(${idx})">✕</button></div>`;}).join('')}`).join('');
 }
-
-function deleteItem(idx) {
-  if(!confirm('Usunąć pozycję EAN: '+db[idx]?.ean+'?')) return;
-  db.splice(idx,1); saveDB(); renderList();
-}
-
-// ─── CSV LIST IMPORT ───────────────────────────────────────────────────────
-function importCSVList(event) {
-  const file=event.target.files[0]; if(!file) return;
-  event.target.value='';
-  const reader=new FileReader();
-  reader.onload=(e)=>{
-    const lines=e.target.result.split('\n').map(l=>l.trim()).filter(l=>l);
-    let imported=0, skipped=0;
-    const start=lines[0]?.toLowerCase().includes('ean')?1:0;
-    for(let i=start;i<lines.length;i++){
-      const cols=lines[i].split(/[,;]/).map(c=>c.trim().replace(/^"|"$/g,''));
-      if(cols.length<3){skipped++;continue;}
-      const [ean,name,location,qty,price]=cols;
-      if(!ean||!name){skipped++;continue;}
-      db.push({ean,name,location:location||'',quantity:qty?parseInt(qty):0,price:price?parseFloat(price):0});
-      imported++;
-    }
-    saveDB();
-    const res=document.getElementById('import-result');
-    res.style.display='block';
-    res.textContent=`✅ Zaimportowano ${imported} pozycji${skipped?' (pominięto '+skipped+')':''}`;
-    speak('Zaimportowano '+imported+' pozycji');
-    setTimeout(()=>showTab('list'),1500);
-  };
-  reader.readAsText(file,'UTF-8');
-}
-
-// ─── WBUDOWANA BAZA TOWARÓW (wszystkie listy) ─────────────────────────────
-// ─── WBUDOWANA BAZA TOWARÓW (wszystkie listy) ─────────────────────────────
-const BUILTIN_DB = [
+function deleteItem(idx){if(!confirm('Usunąć EAN: '+db[idx]?.ean+'?'))return;db.splice(idx,1);saveDB();renderList();}
+const BUILTIN_DB=[
 {ean:"4306517597832",name:"Flair_str_1",location:"1"},
 {ean:"4306517597856",name:"Flair_str_1",location:"2"},
 {ean:"4306517604998",name:"Flair_str_1",location:"3"},
@@ -540,102 +262,104 @@ const BUILTIN_DB = [
 {ean:"4306516560424",name:"Flair_str_1",location:"39"},
 {ean:"4306516560431",name:"Flair_str_1",location:"40"},
 {ean:"4306516560707",name:"Flair_str_1",location:"41"},
-{ean:"4306517603594",name:"Flair_str_2",location:"42"},
-{ean:"4306517603371",name:"Flair_str_2",location:"43"},
-{ean:"4306517603388",name:"Flair_str_2",location:"44"},
+{ean:"4306517603564",name:"Flair_str_2",location:"42"},
+{ean:"4306517603571",name:"Flair_str_2",location:"43"},
+{ean:"4306517603588",name:"Flair_str_2",location:"44"},
 {ean:"4306517603595",name:"Flair_str_2",location:"45"},
 {ean:"4306517603540",name:"Flair_str_2",location:"46"},
-{ean:"4306517603601",name:"Flair_str_2",location:"47"},
-{ean:"4306517603618",name:"Flair_str_2",location:"48"},
-{ean:"4306517603816",name:"Flair_str_2",location:"49"},
-{ean:"4306517603823",name:"Flair_str_2",location:"50"},
-{ean:"4306517603847",name:"Flair_str_2",location:"51"},
-{ean:"4306517603854",name:"Flair_str_2",location:"52"},
-{ean:"4306517603861",name:"Flair_str_2",location:"53"},
-{ean:"4306517603649",name:"Flair_str_2",location:"54"},
-{ean:"4306517603595",name:"Flair_str_2",location:"55"},
-{ean:"4306517603687",name:"Flair_str_2",location:"56"},
+{ean:"4306517603557",name:"Flair_str_2",location:"47"},
+{ean:"4306517603601",name:"Flair_str_2",location:"48"},
+{ean:"4306517603618",name:"Flair_str_2",location:"49"},
+{ean:"4306517603625",name:"Flair_str_2",location:"50"},
+{ean:"4306517603625",name:"Flair_str_2",location:"51"},
+{ean:"4306517603823",name:"Flair_str_2",location:"52"},
+{ean:"4306517603847",name:"Flair_str_2",location:"53"},
+{ean:"4306517603854",name:"Flair_str_2",location:"54"},
+{ean:"4306517603861",name:"Flair_str_2",location:"55"},
+{ean:"4306517603649",name:"Flair_str_2",location:"56"},
 {ean:"4306517603663",name:"Flair_str_2",location:"57"},
 {ean:"4306517603687",name:"Flair_str_2",location:"58"},
 {ean:"4306517603960",name:"Flair_str_2",location:"59"},
 {ean:"4306517603977",name:"Flair_str_2",location:"60"},
 {ean:"4306517604004",name:"Flair_str_2",location:"61"},
 {ean:"4306517604011",name:"Flair_str_2",location:"62"},
-{ean:"4306517603994",name:"Flair_str_2",location:"63"},
+{ean:"4306517603984",name:"Flair_str_2",location:"63"},
 {ean:"4306517603885",name:"Flair_str_2",location:"64"},
 {ean:"4306517603908",name:"Flair_str_2",location:"65"},
 {ean:"4306517603786",name:"Flair_str_2",location:"66"},
-{ean:"4306517603700",name:"Flair_str_2",location:"67"},
-{ean:"4306517603717",name:"Flair_str_2",location:"68"},
-{ean:"4306517603724",name:"Flair_str_2",location:"69"},
-{ean:"4306517603731",name:"Flair_str_2",location:"70"},
-{ean:"4306517603748",name:"Flair_str_2",location:"71"},
-{ean:"4306517603755",name:"Flair_str_2",location:"72"},
-{ean:"4306517603779",name:"Flair_str_2",location:"73"},
-{ean:"4306517603922",name:"Flair_str_2",location:"74"},
-{ean:"4306517603939",name:"Flair_str_2",location:"75"},
-{ean:"4306517679614",name:"Flair_str_2",location:"77"},
-{ean:"4306517679521",name:"Flair_str_2",location:"78"},
-{ean:"4306517275356",name:"Flair_str_2",location:"79"},
+{ean:"4306517603809",name:"Flair_str_2",location:"67"},
+{ean:"4306517603700",name:"Flair_str_2",location:"68"},
+{ean:"4306517603717",name:"Flair_str_2",location:"69"},
+{ean:"4306517603724",name:"Flair_str_2",location:"70"},
+{ean:"4306517603724",name:"Flair_str_2",location:"71"},
+{ean:"4306517603731",name:"Flair_str_2",location:"72"},
+{ean:"4306517603748",name:"Flair_str_2",location:"73"},
+{ean:"4306517603779",name:"Flair_str_2",location:"74"},
+{ean:"4306517603922",name:"Flair_str_2",location:"75"},
+{ean:"4306517673946",name:"Flair_str_2",location:"76"},
+{ean:"4306517679514",name:"Flair_str_2",location:"77"},
+{ean:"4306517279521",name:"Flair_str_2",location:"78"},
+{ean:"4306517679538",name:"Flair_str_2",location:"79"},
 {ean:"4306517679491",name:"Flair_str_2",location:"80"},
-{ean:"4306517679507",name:"Flair_str_2",location:"81"},
+{ean:"4306517689507",name:"Flair_str_2",location:"81"},
+{ean:"4306514680367",name:"Flair_str_2",location:"82"},
 {ean:"4306517680381",name:"Flair_str_2",location:"83"},
 {ean:"4306517680404",name:"Flair_str_2",location:"84"},
 {ean:"4306517680428",name:"Flair_str_2",location:"85"},
 {ean:"4306517680442",name:"Flair_str_2",location:"86"},
-{ean:"8720169364868",name:"Ledvance",location:"37"},
-{ean:"4058075570917",name:"Ledvance",location:"38"},
-{ean:"4058075731363",name:"Ledvance",location:"39"},
-{ean:"4058075730052",name:"Ledvance",location:"40"},
-{ean:"4058075537248",name:"Ledvance",location:"41"},
-{ean:"4058075594784",name:"Ledvance",location:"42"},
-{ean:"4058075532120",name:"Ledvance",location:"43"},
-{ean:"4099854293238",name:"Ledvance",location:"44"},
-{ean:"4099854088537",name:"Ledvance",location:"45"},
-{ean:"4058075486010",name:"Ledvance",location:"46"},
-{ean:"4058075486034",name:"Ledvance",location:"47"},
-{ean:"4058075485693",name:"Ledvance",location:"48"},
-{ean:"4058075486058",name:"Ledvance",location:"49"},
-{ean:"4058075609754",name:"Ledvance",location:"50"},
-{ean:"4058075778559",name:"Ledvance",location:"51"},
-{ean:"4058075778597",name:"Ledvance",location:"52"},
-{ean:"4058075779075",name:"Ledvance",location:"53"},
-{ean:"4058075609778",name:"Ledvance",location:"54"},
-{ean:"4058075778610",name:"Ledvance",location:"55"},
-{ean:"4058075778658",name:"Ledvance",location:"56"},
-{ean:"4058075609792",name:"Ledvance",location:"57"},
-{ean:"4058075610521",name:"Ledvance",location:"58"},
-{ean:"4058075528239",name:"Ledvance",location:"59"},
-{ean:"4058075609815",name:"Ledvance",location:"60"},
-{ean:"4306517604141",name:"Ledvance",location:"61"},
-{ean:"4306517604189",name:"Ledvance",location:"62"},
-{ean:"4306517604585",name:"Ledvance",location:"63"},
-{ean:"4306517604561",name:"Ledvance",location:"64"},
-{ean:"4306517604165",name:"Ledvance",location:"65"},
-{ean:"4306517604547",name:"Ledvance",location:"66"},
-{ean:"4058075778382",name:"Ledvance",location:"67"},
-{ean:"4058075778818",name:"Ledvance",location:"68"},
-{ean:"4058075778412",name:"Ledvance",location:"69"},
-{ean:"4058075778832",name:"Ledvance",location:"70"},
-{ean:"4058075619012",name:"Ledvance",location:"71"},
-{ean:"4058075778450",name:"Ledvance",location:"72"},
-{ean:"4058075778870",name:"Ledvance",location:"73"},
-{ean:"4058075609716",name:"Ledvance",location:"74"},
-{ean:"4058075778498",name:"Ledvance",location:"75"},
-{ean:"4058075778511",name:"Ledvance",location:"76"},
-{ean:"4058075778535",name:"Ledvance",location:"77"},
-{ean:"4058075609730",name:"Ledvance",location:"78"},
-{ean:"4058075778672",name:"Ledvance",location:"79"},
-{ean:"4058075778979",name:"Ledvance",location:"80"},
-{ean:"4058075778702",name:"Ledvance",location:"81"},
-{ean:"4058075778726",name:"Ledvance",location:"82"},
-{ean:"4058075779013",name:"Ledvance",location:"83"},
-{ean:"4058075609693",name:"Ledvance",location:"84"},
-{ean:"4058075528291",name:"Ledvance",location:"85"},
-{ean:"4058075528277",name:"Ledvance",location:"86"},
-{ean:"4058075515932",name:"Ledvance",location:"87"},
-{ean:"4058075523838",name:"Ledvance",location:"88"},
-{ean:"4058075504806",name:"Ledvance",location:"89"},
+{ean:"8720169364868",name:"Ledvance",location:"0"},
+{ean:"4058075570917",name:"Ledvance",location:"1"},
+{ean:"4058075731363",name:"Ledvance",location:"2"},
+{ean:"4058075730052",name:"Ledvance",location:"3"},
+{ean:"4058075537248",name:"Ledvance",location:"4"},
+{ean:"4058075594784",name:"Ledvance",location:"5"},
+{ean:"4058075532120",name:"Ledvance",location:"6"},
+{ean:"4099854293238",name:"Ledvance",location:"7"},
+{ean:"4099854088537",name:"Ledvance",location:"8"},
+{ean:"4058075486010",name:"Ledvance",location:"9"},
+{ean:"4058075486034",name:"Ledvance",location:"10"},
+{ean:"4058075485693",name:"Ledvance",location:"11"},
+{ean:"4058075486058",name:"Ledvance",location:"12"},
+{ean:"4058075609754",name:"Ledvance",location:"13"},
+{ean:"4058075778559",name:"Ledvance",location:"14"},
+{ean:"4058075778597",name:"Ledvance",location:"15"},
+{ean:"4058075779075",name:"Ledvance",location:"16"},
+{ean:"4058075609778",name:"Ledvance",location:"17"},
+{ean:"4058075778610",name:"Ledvance",location:"18"},
+{ean:"4058075778658",name:"Ledvance",location:"19"},
+{ean:"4058075609792",name:"Ledvance",location:"20"},
+{ean:"4058075610521",name:"Ledvance",location:"21"},
+{ean:"4058075528239",name:"Ledvance",location:"22"},
+{ean:"4058075609815",name:"Ledvance",location:"23"},
+{ean:"4306517604141",name:"Ledvance",location:"24"},
+{ean:"4306517604189",name:"Ledvance",location:"25"},
+{ean:"4306517604585",name:"Ledvance",location:"26"},
+{ean:"4306517604561",name:"Ledvance",location:"27"},
+{ean:"4306517604165",name:"Ledvance",location:"28"},
+{ean:"4306517604547",name:"Ledvance",location:"29"},
+{ean:"4058075778382",name:"Ledvance",location:"30"},
+{ean:"4058075778818",name:"Ledvance",location:"31"},
+{ean:"4058075778412",name:"Ledvance",location:"32"},
+{ean:"4058075778832",name:"Ledvance",location:"33"},
+{ean:"4058075619012",name:"Ledvance",location:"34"},
+{ean:"4058075778450",name:"Ledvance",location:"35"},
+{ean:"4058075778870",name:"Ledvance",location:"36"},
+{ean:"4058075609716",name:"Ledvance",location:"37"},
+{ean:"4058075778498",name:"Ledvance",location:"38"},
+{ean:"4058075778511",name:"Ledvance",location:"39"},
+{ean:"4058075778535",name:"Ledvance",location:"40"},
+{ean:"4058075609730",name:"Ledvance",location:"41"},
+{ean:"4058075778672",name:"Ledvance",location:"42"},
+{ean:"4058075778979",name:"Ledvance",location:"43"},
+{ean:"4058075778702",name:"Ledvance",location:"44"},
+{ean:"4058075778726",name:"Ledvance",location:"45"},
+{ean:"4058075779013",name:"Ledvance",location:"46"},
+{ean:"4058075609693",name:"Ledvance",location:"47"},
+{ean:"4058075528291",name:"Ledvance",location:"48"},
+{ean:"4058075528277",name:"Ledvance",location:"49"},
+{ean:"4058075515932",name:"Ledvance",location:"50"},
+{ean:"4058075523838",name:"Ledvance",location:"51"},
+{ean:"4058075504806",name:"Ledvance",location:"52"},
 {ean:"8720169155114",name:"Phillips_Hue",location:"1"},
 {ean:"8719514342620",name:"Phillips_Hue",location:"2"},
 {ean:"8719514274617",name:"Phillips_Hue",location:"3"},
@@ -697,7 +421,7 @@ const BUILTIN_DB = [
 {ean:"8720169187498",name:"Phillips_str_1",location:"23"},
 {ean:"8720169187658",name:"Phillips_str_1",location:"24"},
 {ean:"8720169187818",name:"Phillips_str_1",location:"25"},
-{ean:"8720169181979",name:"Phillips_str_1",location:"26"},
+{ean:"8720169187979",name:"Phillips_str_1",location:"26"},
 {ean:"8720169202689",name:"Phillips_str_1",location:"27"},
 {ean:"8720169202702",name:"Phillips_str_1",location:"28"},
 {ean:"8721103047588",name:"Phillips_str_1",location:"29"},
@@ -746,18 +470,18 @@ const BUILTIN_DB = [
 {ean:"8720169309586",name:"Jarzeniowki_str_1",location:"3"},
 {ean:"8720169254602",name:"Jarzeniowki_str_1",location:"4"},
 {ean:"8720169309562",name:"Jarzeniowki_str_1",location:"5"},
-{ean:"8720169254588",name:"Jarzeniowki_str_1",location:"6"},
+{ean:"8720169254589",name:"Jarzeniowki_str_1",location:"6"},
 {ean:"8720169309609",name:"Jarzeniowki_str_1",location:"7"},
-{ean:"8720169254826",name:"Jarzeniowki_str_1",location:"8"},
+{ean:"8720169254626",name:"Jarzeniowki_str_1",location:"8"},
 {ean:"5410288302393",name:"Jarzeniowki_str_1",location:"9"},
 {ean:"5410288302977",name:"Jarzeniowki_str_1",location:"10"},
 {ean:"4306517604417",name:"Jarzeniowki_str_1",location:"11"},
 {ean:"4306517604455",name:"Jarzeniowki_str_1",location:"12"},
 {ean:"4306517604493",name:"Jarzeniowki_str_1",location:"13"},
-{ean:"4306517604479",name:"Jarzeniowki_str_1",location:"14"},
-{ean:"4306517604516",name:"Jarzeniowki_str_1",location:"15"},
-{ean:"5410288302201",name:"Jarzeniowki_str_1",location:"16"},
-{ean:"5410288302218",name:"Jarzeniowki_str_1",location:"17"},
+{ean:"4306517604431",name:"Jarzeniowki_str_1",location:"14"},
+{ean:"4306517604479",name:"Jarzeniowki_str_1",location:"15"},
+{ean:"5410288304516",name:"Jarzeniowki_str_1",location:"16"},
+{ean:"5410288302731",name:"Jarzeniowki_str_1",location:"17"},
 {ean:"5410288292755",name:"Jarzeniowki_str_1",location:"18"},
 {ean:"5410288292779",name:"Jarzeniowki_str_1",location:"19"},
 {ean:"5410288292748",name:"Jarzeniowki_str_1",location:"20"},
@@ -772,12 +496,12 @@ const BUILTIN_DB = [
 {ean:"5410288302201",name:"Jarzeniowki_str_2",location:"29"},
 {ean:"5410288302218",name:"Jarzeniowki_str_2",location:"30"},
 {ean:"8720169287525",name:"Jarzeniowki_str_2",location:"31"},
-{ean:"8718895541295",name:"Jarzeniowki_str_2",location:"32"},
-{ean:"5410288302249",name:"Jarzeniowki_str_2",location:"33"},
-{ean:"5410288302232",name:"Jarzeniowki_str_2",location:"34"},
-{ean:"5410288302263",name:"Jarzeniowki_str_2",location:"35"},
-{ean:"5410288302270",name:"Jarzeniowki_str_2",location:"36"},
-{ean:"5410288302287",name:"Jarzeniowki_str_2",location:"37"},
+{ean:"8718895541296",name:"Jarzeniowki_str_2",location:"32"},
+{ean:"5410288302256",name:"Jarzeniowki_str_2",location:"33"},
+{ean:"5410288302249",name:"Jarzeniowki_str_2",location:"34"},
+{ean:"5410288302232",name:"Jarzeniowki_str_2",location:"35"},
+{ean:"5410288302263",name:"Jarzeniowki_str_2",location:"36"},
+{ean:"5410288302270",name:"Jarzeniowki_str_2",location:"37"},
 {ean:"4306517626310",name:"Jarzeniowki_str_2",location:"39"},
 {ean:"4306517626341",name:"Jarzeniowki_str_2",location:"40"},
 {ean:"4306517626327",name:"Jarzeniowki_str_2",location:"41"},
@@ -788,266 +512,205 @@ const BUILTIN_DB = [
 {ean:"8720169308909",name:"Jarzeniowki_str_2",location:"46"},
 {ean:"8720169308886",name:"Jarzeniowki_str_2",location:"47"},
 {ean:"8720169308923",name:"Jarzeniowki_str_2",location:"48"},
-{ean:"4058075823617",name:"Jarzeniowki_str_2",location:"49"},
-{ean:"4058075823631",name:"Jarzeniowki_str_2",location:"50"},
+{ean:"4058075822403",name:"Jarzeniowki_str_2",location:"49"},
+{ean:"4058075822427",name:"Jarzeniowki_str_2",location:"50"},
 {ean:"4058075823655",name:"Jarzeniowki_str_2",location:"51"},
 {ean:"4058075823679",name:"Jarzeniowki_str_2",location:"52"},
 {ean:"5410288302874",name:"Jarzeniowki_str_2",location:"53"},
 {ean:"5410288302577",name:"Jarzeniowki_str_2",location:"54"},
 {ean:"5410288302881",name:"Jarzeniowki_str_2",location:"55"},
-{ean:"5410288302584",name:"Jarzeniowki_str_2",location:"56"},
-{ean:"5410288302591",name:"Jarzeniowki_str_2",location:"57"},
+{ean:"5410288302898",name:"Jarzeniowki_str_2",location:"56"},
+{ean:"5410288302584",name:"Jarzeniowki_str_2",location:"57"},
 {ean:"5410288302904",name:"Jarzeniowki_str_2",location:"58"},
-{ean:"5410288302607",name:"Jarzeniowki_str_2",location:"59"},
-{ean:"5410288302591",name:"Jarzeniowki_str_2",location:"60"},
+{ean:"5410288302591",name:"Jarzeniowki_str_2",location:"59"},
+{ean:"5410288302607",name:"Jarzeniowki_str_2",location:"60"},
 {ean:"4306517626358",name:"Jarzeniowki_str_2",location:"61"},
-{ean:"8719514378032",name:"Jarzeniowki_str_2",location:"62"},
-{ean:"8719514378002",name:"Jarzeniowki_str_2",location:"63"},
+{ean:"8719514378056",name:"Jarzeniowki_str_2",location:"62"},
+{ean:"8719514378032",name:"Jarzeniowki_str_2",location:"63"},
 {ean:"4003558012226",name:"Radius_Led",location:"1"},
-{ean:"4003558014153",name:"Radius_Led",location:"2"},
+{ean:"4003558014152",name:"Radius_Led",location:"2"},
 {ean:"4003558014176",name:"Radius_Led",location:"3"},
 {ean:"4003558012257",name:"Radius_Led",location:"4"},
 {ean:"4003558014442",name:"Radius_Led",location:"5"},
-{ean:"4003558014137",name:"Radius_Led",location:"6"},
+{ean:"4003558014138",name:"Radius_Led",location:"6"},
 {ean:"4003558011403",name:"Radius_Led",location:"7"},
-{ean:"4003558011588",name:"Radius_Led",location:"8"},
-{ean:"4003558011649",name:"Radius_Led",location:"9"},
-{ean:"4003558012233",name:"Radius_Led",location:"10"},
-{ean:"4003558011601",name:"Radius_Led",location:"11"},
-{ean:"4003558014169",name:"Radius_Led",location:"12"},
-{ean:"4003558011694",name:"Radius_Led",location:"13"},
-{ean:"4003558011649",name:"Radius_Led",location:"14"},
-{ean:"4003558012271",name:"Radius_Led",location:"15"},
-{ean:"4003558012233",name:"Radius_Led",location:"16"},
-{ean:"4003558012271",name:"Radius_Led",location:"17"},
-{ean:"4003558012189",name:"Radius_Led",location:"18"},
+{ean:"4003558011403",name:"Radius_Led",location:"8"},
+{ean:"4003558011489",name:"Radius_Led",location:"9"},
+{ean:"4003558011526",name:"Radius_Led",location:"10"},
+{ean:"4003558011564",name:"Radius_Led",location:"11"},
+{ean:"4003558011601",name:"Radius_Led",location:"12"},
+{ean:"4003558011649",name:"Radius_Led",location:"13"},
+{ean:"4003558012233",name:"Radius_Led",location:"14"},
+{ean:"4003558014169",name:"Radius_Led",location:"15"},
+{ean:"4003558012271",name:"Radius_Led",location:"16"},
+{ean:"4003558014459",name:"Radius_Led",location:"17"},
+{ean:"4003558011724",name:"Radius_Led",location:"18"},
 {ean:"4003558012189",name:"Radius_Led",location:"19"},
 {ean:"4003558012189",name:"Radius_Led",location:"20"},
 {ean:"4003558012257",name:"Radius_Led",location:"21"},
 {ean:"4003558012257",name:"Radius_Led",location:"22"},
 {ean:"4003558014442",name:"Radius_Led",location:"23"},
-{ean:"4003558014169",name:"Radius_Led",location:"24"},
-{ean:"4003558011649",name:"Radius_Led",location:"25"},
+{ean:"4003558014138",name:"Radius_Led",location:"24"},
+{ean:"4003558011410",name:"Radius_Led",location:"25"},
 {ean:"4003558011410",name:"Radius_Led",location:"26"},
-{ean:"4003558011410",name:"Radius_Led",location:"27"},
-{ean:"4003558011488",name:"Radius_Led",location:"28"},
-{ean:"4003558011496",name:"Radius_Led",location:"29"},
-{ean:"4003558011533",name:"Radius_Led",location:"30"},
+{ean:"4003558011496",name:"Radius_Led",location:"27"},
+{ean:"4003558011496",name:"Radius_Led",location:"28"},
+{ean:"4003558011533",name:"Radius_Led",location:"29"},
+{ean:"4003558011571",name:"Radius_Led",location:"30"},
 {ean:"4003558011571",name:"Radius_Led",location:"31"},
-{ean:"4003558011533",name:"Radius_Led",location:"32"},
-{ean:"4003558011571",name:"Radius_Led",location:"33"},
-{ean:"4003558011656",name:"Radius_Led",location:"34"},
-{ean:"4003558012189",name:"Radius_Led",location:"35"},
-{ean:"4003558011731",name:"Radius_Led",location:"36"},
+{ean:"4003558011618",name:"Radius_Led",location:"32"},
+{ean:"4003558011656",name:"Radius_Led",location:"33"},
+{ean:"4003558012189",name:"Radius_Led",location:"34"},
+{ean:"4003558021731",name:"Radius_Led",location:"35"},
+{ean:"4003558012196",name:"Radius_Led",location:"36"},
 {ean:"4003558012196",name:"Radius_Led",location:"37"},
-{ean:"4003558012196",name:"Radius_Led",location:"38"},
+{ean:"4003558012226",name:"Radius_Led",location:"38"},
 {ean:"4003558012257",name:"Radius_Led",location:"39"},
 {ean:"4003558012257",name:"Radius_Led",location:"40"},
 {ean:"4003558011427",name:"Radius_Led",location:"41"},
 {ean:"4003558011427",name:"Radius_Led",location:"42"},
 {ean:"4003558011502",name:"Radius_Led",location:"43"},
-{ean:"4003558011540",name:"Radius_Led",location:"44"},
-{ean:"4003558011502",name:"Radius_Led",location:"45"},
-{ean:"4003558011540",name:"Radius_Led",location:"46"},
+{ean:"4003558011502",name:"Radius_Led",location:"44"},
+{ean:"4003558011540",name:"Radius_Led",location:"45"},
+{ean:"4003558011588",name:"Radius_Led",location:"46"},
 {ean:"4003558011588",name:"Radius_Led",location:"47"},
-{ean:"4003558011588",name:"Radius_Led",location:"48"},
+{ean:"4003558011625",name:"Radius_Led",location:"48"},
 {ean:"4003558011663",name:"Radius_Led",location:"49"},
 {ean:"4003558012196",name:"Radius_Led",location:"50"},
 {ean:"4003558011748",name:"Radius_Led",location:"51"},
 {ean:"4003558012202",name:"Radius_Led",location:"52"},
-{ean:"4003558012424",name:"Radius_Led",location:"53"},
+{ean:"4003558012202",name:"Radius_Led",location:"53"},
 {ean:"4003558012226",name:"Radius_Led",location:"54"},
 {ean:"4003558012257",name:"Radius_Led",location:"55"},
-{ean:"4003558014084",name:"Radius_Led",location:"56"},
+{ean:"4003558014138",name:"Radius_Led",location:"56"},
 {ean:"4003558014084",name:"Radius_Led",location:"57"},
-{ean:"4003558014107",name:"Radius_Led",location:"58"},
+{ean:"4003558014084",name:"Radius_Led",location:"58"},
 {ean:"4003558014107",name:"Radius_Led",location:"59"},
-{ean:"4003558014114",name:"Radius_Led",location:"60"},
+{ean:"4003558014107",name:"Radius_Led",location:"60"},
 {ean:"4003558014114",name:"Radius_Led",location:"61"},
-{ean:"4003558012196",name:"Radius_Led",location:"62"},
+{ean:"4003558012202",name:"Radius_Led",location:"62"},
 {ean:"4003558014145",name:"Radius_Led",location:"63"},
 {ean:"4003558014121",name:"Radius_Led",location:"64"},
-{ean:"5410288292380",name:"Sylvania",location:"1"},
-{ean:"5410288292397",name:"Sylvania",location:"2"},
-{ean:"5410288292403",name:"Sylvania",location:"3"},
-{ean:"5410288296678",name:"Sylvania",location:"4"},
-{ean:"5410288296715",name:"Sylvania",location:"5"},
-{ean:"5410288296661",name:"Sylvania",location:"6"},
-{ean:"5410288296708",name:"Sylvania",location:"7"},
-{ean:"5410288292250",name:"Sylvania",location:"8"},
-{ean:"5410288292243",name:"Sylvania",location:"9"},
-{ean:"5410288296753",name:"Sylvania",location:"10"},
-{ean:"5410288294940",name:"Sylvania",location:"11"},
-{ean:"5410288293189",name:"Sylvania",location:"12"},
-{ean:"5410288292014",name:"Sylvania",location:"13"},
-{ean:"5410288291192",name:"Sylvania",location:"14"},
-{ean:"5410288291208",name:"Sylvania",location:"15"},
-{ean:"5410288291741",name:"Sylvania",location:"16"},
-{ean:"5410288291826",name:"Sylvania",location:"17"},
-{ean:"5410288291895",name:"Sylvania",location:"18"},
-{ean:"5410288295770",name:"Sylvania",location:"19"},
-{ean:"5410288295770",name:"Sylvania",location:"20"},
-{ean:"5410288295855",name:"Sylvania",location:"21"},
-{ean:"5410288295909",name:"Sylvania",location:"22"},
-{ean:"5410288295947",name:"Sylvania",location:"23"},
-{ean:"5410288296258",name:"Sylvania",location:"24"},
-{ean:"5410288296265",name:"Sylvania",location:"25"},
-{ean:"5410288296272",name:"Sylvania",location:"26"},
-{ean:"5410288296289",name:"Sylvania",location:"27"},
-{ean:"5410288296326",name:"Sylvania",location:"28"},
-{ean:"5410288296333",name:"Sylvania",location:"29"},
-{ean:"5410288296340",name:"Sylvania",location:"30"},
-{ean:"5410288296357",name:"Sylvania",location:"31"},
-{ean:"5410288295626",name:"Sylvania",location:"32"},
-{ean:"5410288295633",name:"Sylvania",location:"33"},
-{ean:"5410288295688",name:"Sylvania",location:"34"},
-{ean:"5410288295695",name:"Sylvania",location:"35"},
-{ean:"5410288296043",name:"Sylvania",location:"36"},
-{ean:"5410288296104",name:"Sylvania",location:"37"},
-{ean:"5410288296159",name:"Sylvania",location:"38"},
-{ean:"5410288269030",name:"Sylvania",location:"39"},
-{ean:"5410288291949",name:"Sylvania",location:"40"},
-{ean:"5410288291956",name:"Sylvania",location:"41"},
-{ean:"5410288292038",name:"Sylvania",location:"42"},
-{ean:"5410288292045",name:"Sylvania",location:"43"},
-{ean:"5410288292069",name:"Sylvania",location:"44"},
-{ean:"5410288292076",name:"Sylvania",location:"45"},
-{ean:"5410288292090",name:"Sylvania",location:"46"},
+{ean:"295770",name:"Sylvania",location:"1"},
+{ean:"295855",name:"Sylvania",location:"2"},
+{ean:"295909",name:"Sylvania",location:"3"},
+{ean:"293189",name:"Sylvania",location:"4"},
+{ean:"295947",name:"Sylvania",location:"5"},
+{ean:"296265",name:"Sylvania",location:"6"},
+{ean:"295626",name:"Sylvania",location:"7"},
+{ean:"296258",name:"Sylvania",location:"8"},
+{ean:"296326",name:"Sylvania",location:"9"},
+{ean:"296043",name:"Sylvania",location:"10"},
+{ean:"296104",name:"Sylvania",location:"11"},
+{ean:"296159",name:"Sylvania",location:"12"},
+{ean:"296093",name:"Sylvania",location:"13"},
+{ean:"291154",name:"Sylvania",location:"14"},
+{ean:"291192",name:"Sylvania",location:"15"},
+{ean:"291420",name:"Sylvania",location:"16"},
+{ean:"291741",name:"Sylvania",location:"17"},
+{ean:"291826",name:"Sylvania",location:"18"},
+{ean:"291859",name:"Sylvania",location:"19"},
+{ean:"292168",name:"Sylvania",location:"20"},
+{ean:"292205",name:"Sylvania",location:"21"},
+{ean:"292243",name:"Sylvania",location:"22"},
+{ean:"292380",name:"Sylvania",location:"23"},
+{ean:"295787",name:"Sylvania",location:"24"},
+{ean:"295879",name:"Sylvania",location:"25"},
+{ean:"295916",name:"Sylvania",location:"26"},
+{ean:"293196",name:"Sylvania",location:"27"},
+{ean:"295954",name:"Sylvania",location:"28"},
+{ean:"296289",name:"Sylvania",location:"29"},
+{ean:"296272",name:"Sylvania",location:"30"},
+{ean:"296340",name:"Sylvania",location:"31"},
+{ean:"292076",name:"Sylvania",location:"32"},
+{ean:"296050",name:"Sylvania",location:"33"},
+{ean:"296111",name:"Sylvania",location:"34"},
+{ean:"296166",name:"Sylvania",location:"35"},
+{ean:"291123",name:"Sylvania",location:"36"},
+{ean:"291161",name:"Sylvania",location:"37"},
+{ean:"291208",name:"Sylvania",location:"38"},
+{ean:"292175",name:"Sylvania",location:"39"},
+{ean:"292212",name:"Sylvania",location:"40"},
+{ean:"292250",name:"Sylvania",location:"41"},
+{ean:"29661",name:"Sylvania",location:"42"},
 {ean:"4020058851263",name:"specjale",location:"1"},
-{ean:"4020058802253",name:"specjale",location:"3"},
-{ean:"4306517617173",name:"specjale",location:"4"},
-{ean:"4306517617180",name:"specjale",location:"5"},
-{ean:"4020058833311",name:"specjale",location:"6"},
-{ean:"4020058851286",name:"specjale",location:"7"},
-{ean:"4306517598845",name:"specjale",location:"8"},
-{ean:"4306517598207",name:"specjale",location:"9"},
-{ean:"4306517578477",name:"specjale",location:"10"},
-{ean:"4020058652248",name:"specjale",location:"11"},
-{ean:"4020058563657",name:"specjale",location:"12"},
-{ean:"4306517598944",name:"specjale",location:"13"},
-{ean:"4020058832897",name:"specjale",location:"14"},
-{ean:"4306517598310",name:"specjale",location:"15"},
-{ean:"4306517678494",name:"specjale",location:"16"},
-{ean:"4306517678478",name:"specjale",location:"17"},
-{ean:"8718669774073",name:"specjale",location:"18"},
-{ean:"4020058851822",name:"specjale",location:"19"},
-{ean:"4020058225722",name:"specjale",location:"20"},
-{ean:"4020058851779",name:"specjale",location:"21"},
-{ean:"4306517811652",name:"specjale",location:"22"},
-{ean:"5410288225760",name:"specjale",location:"23"},
-{ean:"5410288225780",name:"specjale",location:"24"},
-{ean:"4020058563769",name:"specjale",location:"25"},
-{ean:"4020058851295",name:"specjale",location:"26"},
-{ean:"9716880780371",name:"specjale",location:"27"},
-{ean:"4306517611989",name:"specjale",location:"28"},
-{ean:"4020058563784",name:"specjale",location:"29"},
+{ean:"4020058802253",name:"specjale",location:"2"},
+{ean:"4306517617173",name:"specjale",location:"3"},
+{ean:"4306517617180",name:"specjale",location:"4"},
+{ean:"4020058833311",name:"specjale",location:"5"},
+{ean:"4020058853755",name:"specjale",location:"6"},
+{ean:"4306517591256",name:"specjale",location:"7"},
+{ean:"4306517596845",name:"specjale",location:"8"},
+{ean:"4306517578297",name:"specjale",location:"9"},
+{ean:"4020058659477",name:"specjale",location:"10"},
+{ean:"4020058562246",name:"specjale",location:"11"},
+{ean:"4306517593687",name:"specjale",location:"12"},
+{ean:"4020058836944",name:"specjale",location:"13"},
+{ean:"4306517592697",name:"specjale",location:"14"},
+{ean:"4306517678310",name:"specjale",location:"15"},
+{ean:"4306517679484",name:"specjale",location:"16"},
+{ean:"8718669774073",name:"specjale",location:"17"},
+{ean:"4020058853342",name:"specjale",location:"18"},
+{ean:"4020058221522",name:"specjale",location:"19"},
+{ean:"4020058855722",name:"specjale",location:"20"},
+{ean:"4306517813779",name:"specjale",location:"21"},
+{ean:"5410288221552",name:"specjale",location:"22"},
+{ean:"5410288225746",name:"specjale",location:"23"},
+{ean:"4020058565760",name:"specjale",location:"24"},
+{ean:"4020058851539",name:"specjale",location:"25"},
+{ean:"9716880783786",name:"specjale",location:"26"},
+{ean:"4306517610371",name:"specjale",location:"27"},
+{ean:"4020058561569",name:"specjale",location:"28"},
+{ean:"8718699775784",name:"specjale",location:"29"},
 {ean:"8718699771935",name:"specjale",location:"30"},
 {ean:"8718699771959",name:"specjale",location:"31"},
-{ean:"8718699773991",name:"specjale",location:"32"},
-{ean:"4306517275268",name:"specjale",location:"33"},
-{ean:"4306517275356",name:"specjale",location:"34"},
-{ean:"2007060007730",name:"specjale",location:"35"},
-{ean:"4000870600157",name:"specjale",location:"36"},
-{ean:"4000870600100",name:"specjale",location:"37"},
-{ean:"8719514332580",name:"specjale",location:"38"},
-{ean:"8711869013311",name:"specjale",location:"39"},
-{ean:"8719501389130",name:"specjale",location:"40"},
-{ean:"5410288688598",name:"specjale",location:"41"},
-{ean:"4020058851033",name:"specjale",location:"42"},
-{ean:"4020058851010",name:"specjale",location:"43"},
-{ean:"4020058851027",name:"specjale",location:"44"},
-{ean:"4306517614378",name:"specjale",location:"45"},
-{ean:"4020058652277",name:"specjale",location:"47"},
-{ean:"4306517602260",name:"specjale",location:"48"},
-{ean:"4306517602294",name:"specjale",location:"49"},
-{ean:"4306517622222",name:"specjale",location:"50"},
-{ean:"4306517602049",name:"specjale",location:"51"},
-{ean:"4306517802209",name:"specjale",location:"52"},
-{ean:"4306517902150",name:"specjale",location:"53"},
-{ean:"4306517904144",name:"specjale",location:"54"},
-{ean:"4306517904151",name:"specjale",location:"55"},
-{ean:"4306517803130",name:"specjale",location:"56"},
-{ean:"4306517803169",name:"specjale",location:"57"},
-{ean:"4306517803176",name:"specjale",location:"58"},
-{ean:"4306517803183",name:"specjale",location:"59"},
-{ean:"4306517803190",name:"specjale",location:"60"},
-{ean:"4306511900144",name:"specjale",location:"61"},
-{ean:"4020058851222",name:"specjale",location:"62"},
-{ean:"4306517706018",name:"specjale",location:"63"},
-{ean:"4020058851263",name:"specjale",location:"64"},
-{ean:"4306517706025",name:"specjale",location:"65"},
-{ean:"4306517706032",name:"specjale",location:"66"},
-{ean:"4306517706049",name:"specjale",location:"67"},
-{ean:"4306517706056",name:"specjale",location:"68"},
-{ean:"4020058853305",name:"specjale",location:"69"}
+{ean:"4306517275266",name:"specjale",location:"32"},
+{ean:"4306517275235",name:"specjale",location:"33"},
+{ean:"2007060007720",name:"specjale",location:"34"},
+{ean:"4000870600157",name:"specjale",location:"35"},
+{ean:"4000870600100",name:"specjale",location:"36"},
+{ean:"8719514338715",name:"specjale",location:"37"},
+{ean:"8711869012550",name:"specjale",location:"38"},
+{ean:"8719501383211",name:"specjale",location:"39"},
+{ean:"5410288686968",name:"specjale",location:"40"},
+{ean:"4020058851010",name:"specjale",location:"41"},
+{ean:"4020058851003",name:"specjale",location:"42"},
+{ean:"4020058851027",name:"specjale",location:"43"},
+{ean:"4306517614379",name:"specjale",location:"44"},
+{ean:"4020058652390",name:"specjale",location:"45"},
+{ean:"4020058652277",name:"specjale",location:"46"},
+{ean:"4306517602260",name:"specjale",location:"47"},
+{ean:"4306517602284",name:"specjale",location:"48"},
+{ean:"4306517622222",name:"specjale",location:"49"},
+{ean:"4306517602246",name:"specjale",location:"50"},
+{ean:"4306517802208",name:"specjale",location:"51"},
+{ean:"4306517902185",name:"specjale",location:"52"},
+{ean:"4306517901652",name:"specjale",location:"53"},
+{ean:"4306517908392",name:"specjale",location:"54"},
+{ean:"4306517803144",name:"specjale",location:"55"},
+{ean:"4306517803120",name:"specjale",location:"56"},
+{ean:"4306517803168",name:"specjale",location:"57"},
+{ean:"4306517802963",name:"specjale",location:"58"},
+{ean:"4306517803021",name:"specjale",location:"59"},
+{ean:"4306511902987",name:"specjale",location:"60"},
+{ean:"4020058853007",name:"specjale",location:"61"},
+{ean:"4306517705018",name:"specjale",location:"62"},
+{ean:"4020058852949",name:"specjale",location:"63"},
+{ean:"4306517705032",name:"specjale",location:"64"},
+{ean:"4306517705056",name:"specjale",location:"65"},
+{ean:"4306517701251",name:"specjale",location:"66"},
+{ean:"4306517701232",name:"specjale",location:"67"},
+{ean:"4020058853229",name:"specjale",location:"68"},
+{ean:"4020058853205",name:"specjale",location:"69"},
 ];
-
-
-function preloadBuiltinDB() {
-  if(localStorage.getItem('mag_preloaded_v3')) return;
-  localStorage.removeItem('mag_v2');
-  db = [];
-  for(const item of BUILTIN_DB) {
-    db.push({ean:item.ean, name:item.name, location:item.location, quantity:0, price:0});
-  }
-  saveDB();
-  localStorage.setItem('mag_preloaded_v3','1');
+function preloadBuiltinDB(){
+  if(localStorage.getItem('mag_preloaded_v5'))return;
+  localStorage.removeItem('mag_v2');db=[];
+  for(const item of BUILTIN_DB){db.push({ean:item.ean,name:item.name,location:item.location,quantity:0,price:0});}
+  saveDB();localStorage.setItem('mag_preloaded_v5','1');
 }
-
-// ─── BARCODE SCANNER (ZXing) ───────────────────────────────────────────────
-let barcodeScanner = null;
-let scannerActive = false;
-
-async function toggleBarcodeScanner() {
-  if (scannerActive) {
-    stopBarcodeScanner();
-    return;
-  }
-  const wrap = document.getElementById('scanner-wrap');
-  const btn = document.getElementById('scan-barcode-btn');
-  wrap.style.display = 'block';
-  btn.textContent = '⏹ Zatrzymaj skaner';
-  scannerActive = true;
-
-  try {
-    const { BrowserMultiFormatReader } = ZXing;
-    barcodeScanner = new BrowserMultiFormatReader();
-    const video = document.getElementById('scanner-video');
-    const devices = await ZXing.BrowserMultiFormatReader.listVideoInputDevices();
-    const backCam = devices.find(d => d.label.toLowerCase().includes('back') || d.label.toLowerCase().includes('rear')) || devices[devices.length - 1];
-    const deviceId = backCam ? backCam.deviceId : undefined;
-
-    barcodeScanner.decodeFromVideoDevice(deviceId, video, (result, err) => {
-      if (result) {
-        const ean = result.getText();
-        document.getElementById('f-ean').value = ean;
-        document.getElementById('scan-result-bar').style.display = 'block';
-        document.getElementById('scan-result-bar').textContent = '✅ Zeskanowano: ' + ean;
-        speak('Zeskanowano ' + ean.slice(-4));
-        stopBarcodeScanner();
-        document.getElementById('f-name').focus();
-      }
-    });
-  } catch(e) {
-    document.getElementById('scan-result-bar').style.display = 'block';
-    document.getElementById('scan-result-bar').textContent = '⚠️ Brak dostępu do kamery lub kamera niedostępna';
-    document.getElementById('scan-result-bar').style.background = '#FFEBEE';
-    document.getElementById('scan-result-bar').style.color = '#C62828';
-    stopBarcodeScanner();
-  }
-}
-
-function stopBarcodeScanner() {
-  scannerActive = false;
-  if (barcodeScanner) { try { barcodeScanner.reset(); } catch(e) {} barcodeScanner = null; }
-  document.getElementById('scanner-wrap').style.display = 'none';
-  document.getElementById('scan-barcode-btn').innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:22px;height:22px"><rect x="2" y="4" width="4" height="16"/><rect x="8" y="4" width="2" height="16"/><rect x="12" y="4" width="4" height="16"/><rect x="18" y="4" width="4" height="16"/></svg> Skanuj kod kreskowy aparatem`;
-}
-
-// ─── INIT ──────────────────────────────────────────────────────────────────
-loadDB();
-preloadBuiltinDB();
-setTimeout(()=>{ startListening(); }, 800);
+loadDB();preloadBuiltinDB();
+setTimeout(()=>{startListening();},800);
 </script>
 </body>
 </html>
