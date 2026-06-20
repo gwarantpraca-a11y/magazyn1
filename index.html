@@ -3,12 +3,11 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"/>
-<meta name="theme-color" content="#0C447C"/>
+<meta name="theme-color" content="#111111"/>
 <meta name="mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-title" content="Magazyn"/>
-<link rel="manifest" href="manifest.json"/>
-<title>Magazyn</title>
+<title>Magazyn Hornbach</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0C447C;overflow:hidden}
@@ -42,7 +41,7 @@ html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sa
 .tab{flex:1;padding:12px 4px;border:none;background:none;font-size:13px;font-weight:500;color:#888;cursor:pointer;border-bottom:2px solid transparent}
 .tab.active{color:#0C447C;border-bottom-color:#0C447C}
 .panel{display:none;flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
-.panel.active{display:block}
+.panel.active{display:block}.worker-frame-wrap{height:100%;background:#111;display:flex;flex-direction:column}.worker-frame{width:100%;flex:1;border:0;display:block;background:#f5f2ea}.worker-note{padding:10px 12px;background:#111;color:#ffd400;font-weight:900;font-size:12px;border-bottom:4px solid #f37021}
 .form-wrap{padding:16px}
 .section-title{font-size:12px;color:#888;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:10px;font-weight:600}
 .field{margin-bottom:12px}
@@ -68,31 +67,83 @@ html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sa
 .empty-state{text-align:center;padding:40px 20px;color:#AAA;font-size:15px}
 .import-result{display:none;margin-top:12px;background:#E8F5E9;border-radius:10px;padding:12px;font-size:14px;color:#2E7D32;font-weight:600}
 .info-box{background:#E3F2FD;border-radius:14px;padding:16px;margin-bottom:14px;font-size:13px;color:#1565C0;line-height:1.8}
+.login-field{margin-bottom:10px}.login-field label{display:block;font-size:12px;font-weight:1000;text-transform:uppercase;margin-bottom:4px}.login-field input{width:100%;border:2px solid #111;border-radius:6px;padding:13px;font-size:18px;font-weight:900}.login-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}.login-actions button,.login-voice{border:0;border-radius:6px;padding:13px 10px;font-weight:1000;text-transform:uppercase;background:linear-gradient(90deg,#f37021,#ffd400);color:#111}.login-actions button.dark,.login-voice{background:#111;color:#ffd400}.login-hint{font-size:12px;color:#555;font-weight:800;margin-top:10px;line-height:1.35}#start-screen{position:fixed;inset:0;z-index:50;background:#111;color:#fff;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:22px;overflow:hidden}#start-screen:before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(135deg,rgba(255,111,0,.18) 0 18px,transparent 18px 36px),linear-gradient(160deg,#151515 0%,#2b1600 55%,#111 100%)}#start-screen:after{content:"";position:absolute;left:-8vw;right:-8vw;bottom:8vh;height:46px;background:#ff6a00;transform:rotate(-5deg);box-shadow:0 18px 0 #ffd400,0 -18px 0 #d71920}.start-card{position:relative;z-index:1;width:min(460px,100%);padding:10px 0 80px}.start-kicker{font-size:12px;font-weight:900;color:#ffd400;letter-spacing:0}.start-card h2{font-size:48px;line-height:.95;margin:10px 0 12px;color:#fff}.start-card p{font-size:16px;line-height:1.35;color:#f3f3f3;margin:0 0 20px}.start-actions{display:flex;gap:10px}.start-actions button{flex:1;border:0;background:#ff6a00;color:#111;font-weight:900;font-size:16px;border-radius:8px;padding:14px 12px}.start-actions button:nth-child(2){background:#ffd400}.start-footer{position:absolute;left:22px;right:22px;bottom:22px;z-index:2;display:flex;justify-content:space-between;gap:12px;font-size:12px;color:#fff}#app.start-hidden{display:none}
+.list-wrap.compact{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;padding:6px}.list-wrap.compact .list-group-header{grid-column:1/-1;margin:4px 0 2px;padding:4px;font-size:10px}.list-wrap.compact .item-card{margin:0;padding:7px 8px;gap:7px;border-radius:8px;min-height:44px}.list-wrap.compact .item-loc{min-width:38px;font-size:14px;padding:5px 7px}.list-wrap.compact .item-ean{font-size:11px;word-break:break-all}.list-wrap.compact .item-actions{grid-column:auto}.list-wrap.compact .item-edit,.list-wrap.compact .item-del{padding:6px 7px;font-size:11px}@media(max-width:420px){.list-wrap.compact{grid-template-columns:1fr 1fr}.list-wrap.compact .item-card{padding:6px}.list-wrap.compact .item-ean{font-size:10px}}
+.list-toolbar{display:flex;align-items:center;gap:8px;margin-top:8px}.list-edit-btn{border:0;background:#0C447C;color:#fff;border-radius:8px;padding:8px 10px;font-weight:700}.list-edit-status{font-size:12px;color:#666}.list-hit-info{display:none;margin-top:8px;padding:7px 8px;background:#FFF3D0;border:1px solid #FFC400;border-radius:8px;font-size:12px;color:#3b2b00}.item-card.hit{outline:3px solid #FFC400;background:#FFF8D8}
+</style>
+
+<style id="hornbach-theme-final">
+:root{--hb-black:#111;--hb-ink:#1b1b1b;--hb-orange:#f37021;--hb-orange-2:#ff8a00;--hb-yellow:#ffd400;--hb-red:#d71920;--hb-paper:#f5f5f2;--hb-line:#d8d4ca;--hb-white:#fff}
+html,body{background:var(--hb-black)}
+#app{background:var(--hb-paper);color:var(--hb-ink)}
+.topbar{background:linear-gradient(135deg,#111 0%,#1d1d1d 62%,#2a1200 100%);border-bottom:5px solid var(--hb-orange);box-shadow:inset 0 -2px 0 var(--hb-yellow)}
+.topbar h1{font-weight:900;letter-spacing:0;color:#fff;text-transform:uppercase}
+.badge{background:var(--hb-yellow);color:#111;border-radius:6px;font-weight:900}
+.status-text{color:#f5f5f2;opacity:1;font-weight:700}.mic-status-dot{background:var(--hb-yellow)}.mic-status-dot.off{background:#777}
+.mic-section{background:#111;padding:12px 16px 16px;border-bottom:4px solid var(--hb-yellow)}
+.mic-btn{border-radius:8px;text-transform:uppercase;font-weight:900;letter-spacing:0;box-shadow:0 4px 0 rgba(0,0,0,.35);border:2px solid rgba(255,255,255,.18)}
+.mic-btn.stopped{background:linear-gradient(90deg,var(--hb-orange),var(--hb-yellow));color:#111}.mic-btn.listening{background:linear-gradient(90deg,var(--hb-red),#8f0f14);color:#fff}.mic-btn:active{transform:translateY(2px);box-shadow:0 2px 0 rgba(0,0,0,.35)}
+.heard-row{background:#fff;border-bottom:1px solid var(--hb-line)}.heard-label{color:#555;font-weight:800}.heard-val{color:#111;background:var(--hb-yellow);border-radius:6px;padding:2px 7px;letter-spacing:0}
+.result-wrap{background:#fff}.result-card{border-radius:8px;border-width:2px}.result-card.found{background:#fff8d6;border-color:var(--hb-yellow);box-shadow:inset 6px 0 0 var(--hb-orange)}.result-card.notfound{background:#fff0f0;border-color:var(--hb-red);box-shadow:inset 6px 0 0 var(--hb-red)}
+.result-name{color:#111;font-weight:900}.result-loc-label{color:#111;font-weight:900}.result-loc{color:var(--hb-red)}.notfound-title{color:var(--hb-red);font-weight:900}
+.tabs{background:#111;border-bottom:4px solid var(--hb-orange);gap:1px}.tab{background:#242424;color:#f5f5f2;border-bottom:0;font-weight:900;text-transform:uppercase}.tab.active{background:var(--hb-yellow);color:#111;border-bottom-color:transparent}.tab:active{background:var(--hb-orange);color:#111}
+.panel{background:var(--hb-paper)}.form-wrap{padding:14px;background:var(--hb-paper)}.section-title{color:#111;font-weight:900;background:var(--hb-yellow);display:inline-block;padding:4px 8px;border-left:6px solid var(--hb-orange);border-radius:0;text-transform:uppercase}
+.field label{color:#111;font-weight:900}.field input,.list-search input{border:2px solid var(--hb-line);border-radius:6px;background:#fff;color:#111}.field input:focus,.list-search input:focus{border-color:var(--hb-orange);box-shadow:0 0 0 3px rgba(243,112,33,.18)}
+.save-btn,.import-btn,.list-edit-btn{border-radius:6px;background:linear-gradient(90deg,var(--hb-orange),var(--hb-yellow));color:#111;font-weight:900;text-transform:uppercase;border:0;box-shadow:0 3px 0 rgba(0,0,0,.25)}.import-btn{background:linear-gradient(90deg,#111,var(--hb-orange));color:#fff}.list-edit-btn{padding:9px 12px}.list-edit-status{font-weight:800;color:#333}
+.csv-area,.info-box{background:#fff;border:2px solid var(--hb-line);border-left:7px solid var(--hb-orange);border-radius:6px;color:#222}.csv-area code{background:#111;color:var(--hb-yellow)}.import-result{background:#fff8d6;color:#111;border:2px solid var(--hb-yellow);border-radius:6px}
+.list-search{background:#fff;border-bottom:4px solid var(--hb-yellow)}.list-group-header{color:#111;border-bottom:3px solid var(--hb-orange);font-weight:900;background:#fff;padding:7px 8px;border-radius:4px 4px 0 0}.item-card{border:2px solid #e7e0d7;border-radius:6px;background:#fff;box-shadow:0 1px 0 rgba(0,0,0,.06)}.item-loc{background:#111;color:var(--hb-yellow);border-radius:4px}.item-ean{color:#111;font-weight:800}.item-card.hit{outline:4px solid var(--hb-yellow);background:#fff4b8}.list-hit-info{background:#111;color:#fff;border-color:var(--hb-orange);border-radius:6px;font-weight:800}
+.shelf-pick-card{border:2px solid var(--hb-line);border-radius:6px;background:#fff;box-shadow:inset 7px 0 0 var(--hb-orange)}.shelf-pick-name{color:#111;font-weight:900}.shelf-pick-count{color:#555;font-weight:800}.shelf-back{background:#111;border-bottom:4px solid var(--hb-orange)}.shelf-back button{color:var(--hb-yellow);font-weight:900}.shelf-sign{background:linear-gradient(90deg,#111,var(--hb-orange));color:#fff;border-radius:0;margin:8px 8px 0;text-transform:uppercase}.shelf-body{border-color:#5f4b32;background:#b98d53}.shelf-plank{background:#6f431d}.shelf-row{background:#c99a56}.shelf-floor{background:#777;border-top-color:#555}.shelf-prod.on .shelf-card{outline-color:var(--hb-yellow)}.shelf-ptag{background:linear-gradient(90deg,var(--hb-red),var(--hb-orange),var(--hb-yellow))}
+#start-screen{background:#111;align-items:stretch;padding:22px}#start-screen:before{background:repeating-linear-gradient(135deg,rgba(255,212,0,.16) 0 16px,transparent 16px 32px),radial-gradient(circle at 20% 20%,rgba(243,112,33,.34),transparent 34%),linear-gradient(145deg,#111 0%,#1b1b1b 52%,#2a1200 100%)}#start-screen:after{height:54px;background:var(--hb-orange);box-shadow:0 20px 0 var(--hb-yellow),0 -20px 0 var(--hb-red);bottom:7vh}.start-card{width:min(560px,100%);margin:auto;z-index:2;padding:0 0 96px}.start-kicker{display:inline-block;background:var(--hb-yellow);color:#111;padding:5px 8px;font-weight:1000}.start-card h2{font-size:52px;text-transform:uppercase;font-weight:1000;color:#fff;text-shadow:0 3px 0 #000}.start-card p{font-weight:800;color:#fff}.start-actions{display:flex;flex-direction:column;gap:12px;margin-top:22px}.start-actions button{position:relative;overflow:hidden;min-height:92px;padding:16px 18px 16px 92px;border-radius:0;border:3px solid #111;text-align:left;font-size:28px;line-height:1;font-weight:1000;text-transform:uppercase;color:#111;box-shadow:8px 8px 0 rgba(0,0,0,.45)}.start-actions button:before{content:"";position:absolute;left:0;top:0;bottom:0;width:72px;background:repeating-linear-gradient(135deg,#111 0 10px,var(--hb-yellow) 10px 20px)}.start-actions button:after{display:block;margin-top:8px;font-size:12px;font-weight:1000;letter-spacing:.04em;color:#111}.start-actions button:first-child{background:linear-gradient(90deg,var(--hb-orange),var(--hb-yellow))}.start-actions button:first-child:after{content:"SPRAWDŹ POŁOŻENIE NA REGALE"}.start-actions button:nth-child(2){background:linear-gradient(90deg,var(--hb-yellow),#fff 72%)}.start-actions button:nth-child(2):after{content:"OTWÓRZ LISTĘ I POZYCJE"}.start-footer{font-weight:900;color:#fff;text-shadow:0 2px 0 #000}
+@media(max-width:420px){.start-card h2{font-size:42px}.start-actions button{font-size:24px;min-height:86px;padding-left:84px}.topbar h1{font-size:18px}.tab{font-size:11px}}
 </style>
 </head>
 <body>
-<div id="app">
+<div id="start-screen">
+  <div class="start-card">
+    <div class="start-kicker">HORNBACH MAGAZYN</div>
+    <h2>Znajdż towar</h2>
+    <p>Szybkie sprawdzanie regałów, list i pozycji z bazy Supabase.</p>
+    <div class="start-actions">
+      
+      <button onclick="enterApp('worker')">Pracownik</button><button onclick="enterApp('shelf')">Regały</button>
+      <button onclick="enterApp('list')">Lista</button>
+    </div>
+  </div>
+  <div class="start-footer">
+    <span id="start-data-status">Ładowanie danych...</span>
+    <span>Tablet - Chrome</span>
+  </div>
+</div>
+<div id="app" class="start-hidden">
   <div class="topbar">
-    <h1>Magazyn</h1>
+    <h1>Magazyn Hornbach</h1>
     <div class="topbar-row">
-      <div class="status-text"><span class="mic-status-dot" id="mic-dot"></span><span id="status-label">Nasłuchiwanie aktywne</span></div>
+      <div class="status-text"><span class="mic-status-dot off" id="mic-dot"></span><span id="status-label">Nasłuchiwanie zatrzymane</span></div>
       <span class="badge" id="db-count">0 towarów</span>
     </div>
   </div>
   <div class="mic-section">
-    <button class="mic-btn listening" id="mic-btn" onclick="toggleListening()">
+    <button class="mic-btn stopped" id="mic-btn" onclick="toggleListening()">
       <svg style="width:24px;height:24px;flex-shrink:0" viewBox="0 0 24 24" fill="currentColor"><path d="M12 1a4 4 0 0 1 4 4v6a4 4 0 0 1-8 0V5a4 4 0 0 1 4-4zm-1 17.93V21h-2v2h6v-2h-2v-2.07A8 8 0 0 0 20 11h-2a6 6 0 0 1-12 0H4a8 8 0 0 0 7 7.93z"/></svg>
-      <span id="mic-btn-label">ZATRZYMAJ NASŁUCHIWANIE</span>
+      <span id="mic-btn-label">WŁĄCZ NASŁUCHIWANIE</span>
     </button>
   </div>
   <div class="heard-row"><span class="heard-label">Ostatnio słyszę:</span><span class="heard-val" id="heard-val">—</span></div>
   <div class="result-wrap"><div id="result-card" class="result-card"></div></div>
   <div class="tabs">
-    <button class="tab active" onclick="showTab('add')" id="tab-add">Dodaj</button>
-    <button class="tab" onclick="showTab('scan-list')" id="tab-scan-list">Import listy</button>
+    <button class="tab active" onclick="showTab('worker')" id="tab-worker">Pracownik</button>
+    <button class="tab" onclick="showTab('add')" id="tab-add">Dodaj</button>
+    <button class="tab" onclick="showTab('scan-list')" id="tab-scan-list">Import</button>
     <button class="tab" onclick="showTab('list')" id="tab-list">Lista</button>
+    <button class="tab" onclick="showTab('shelf')" id="tab-shelf">Regały</button>
   </div>
-  <div id="panel-add" class="panel active">
+  <div id="panel-worker" class="panel active">
+    <div class="worker-frame-wrap">
+      <div class="worker-note">Tryb Pracownik - regały, mapa sklepu i gra paletowa</div>
+      <iframe class="worker-frame" src="smart-route/index.html" title="Tryb Pracownik"></iframe>
+    </div>
+  </div>
+  <div id="panel-add" class="panel">
     <div class="form-wrap">
       <div class="section-title">Dodaj ręcznie</div>
       <div class="field"><label>Kod EAN *</label><input id="f-ean" type="text" inputmode="numeric" placeholder="np. 5901234567890"/></div>
@@ -122,16 +173,51 @@ html,body{height:100%;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sa
     </div>
   </div>
   <div id="panel-list" class="panel">
-    <div class="list-search"><input id="search-input" type="text" placeholder="Szukaj po EAN lub liście..." oninput="renderList()"/></div>
+    <div class="list-search">
+      <input id="search-input" type="text" placeholder="Szukaj po EAN lub liście..." oninput="clearListHits();renderList()"/>
+      <div class="list-toolbar">
+        <button class="list-edit-btn" id="list-edit-toggle" onclick="unlockListEditing()">Odblokuj edycję</button>
+        <span class="list-edit-status" id="list-edit-status">Tylko podgląd</span>
+      </div>
+      <div class="list-hit-info" id="list-hit-info"></div>
+    </div>
     <div class="list-wrap" id="list-wrap"></div>
   </div>
+  <div id="panel-shelf" class="panel">
+    <div id="shelf-picker" style="padding:14px"></div>
+    <div id="shelf-view" style="display:none"></div>
+  </div>
 </div>
+<style>
+#panel-shelf{overflow:hidden}.panel.active#panel-shelf{display:block}#shelf-view{height:100%;overflow:hidden}.shelf-pick-card{background:#fff;border:1.5px solid #E0E0E0;border-radius:14px;padding:16px;margin-bottom:10px;cursor:pointer;display:flex;justify-content:space-between;align-items:center}
+.shelf-pick-card:active{background:#F0F4F8}
+.shelf-pick-name{font-size:16px;font-weight:600;color:#0C447C}
+.shelf-pick-count{font-size:12px;color:#888}
+.shelf-back{padding:10px 14px;background:#fff;border-bottom:1px solid #E0E0E0;display:flex;align-items:center;gap:10px}
+.shelf-back button{background:none;border:none;color:#0C447C;font-size:15px;font-weight:600;cursor:pointer;padding:6px}
+.shelf-sign{text-align:center;padding:12px;font-size:16px;font-weight:700;letter-spacing:1px;color:#fff;margin:10px;border-radius:6px 6px 0 0;background:#0D5EAF}
+.shelf-body{margin:0 10px;border:2px solid #999;border-top:none}
+.shelf-row{display:flex;gap:1px;padding:3px 3px 0;background:#d4b06a;min-height:30px;align-items:flex-end}
+.shelf-plank{height:11px;background:#8a6030;border-top:2px solid #eee}
+.shelf-rowlabel{font-size:10px;color:#888;padding:3px 6px;background:#fff;font-weight:500}
+.shelf-prod{flex:1 1 0;min-width:0;cursor:pointer;display:flex;flex-direction:column;align-items:center;transition:transform .15s}
+.shelf-prod.on{transform:translateY(-9px);filter:drop-shadow(0 5px 12px rgba(255,200,0,.8))}
+.shelf-prod.on .shelf-card{outline:3px solid gold;outline-offset:2px}
+.shelf-card{width:100%;border-radius:4px;border:1px solid rgba(0,0,0,.15);overflow:hidden;background:#fff}
+.shelf-svgwrap{background:#fff;display:flex;align-items:center;justify-content:center;height:26px;overflow:hidden;padding:1px}
+.shelf-info{display:none}
+.shelf-bn{font-size:7px;color:#888;font-weight:700;text-align:center;line-height:1.6;width:100%}
+.shelf-ptag{height:5px;background:linear-gradient(to right,#FF5500,#FF8800);width:100%}
+.shelf-floor{height:14px;background:#bbb;border-top:2px solid #aaa;margin:0 10px 14px}
+.shelf-view-multi{height:100%;overflow:hidden}.shelf-multi-grid{height:calc(100% - 42px);display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,1fr));gap:6px;padding:6px}.shelf-mini{min-height:0;background:#fff;border:1px solid #D9D9D9;border-radius:6px;overflow:hidden;display:flex;flex-direction:column}.shelf-mini .shelf-sign{font-size:10px;margin:0;border-radius:0;padding:5px 2px;letter-spacing:0}.shelf-mini .shelf-body{margin:0;border-left:none;border-right:none;overflow:hidden;flex:1}.shelf-mini .shelf-row{min-height:12px;padding:1px 1px 0;gap:0}.shelf-mini .shelf-svgwrap{height:10px;padding:0}.shelf-mini .shelf-card{border-radius:2px}.shelf-mini .shelf-rowlabel{display:none}.shelf-mini .shelf-bn{font-size:5px;line-height:1.1}.shelf-mini .shelf-ptag{height:2px}.shelf-mini .shelf-plank{height:4px;border-top:1px solid #eee}.shelf-mini .shelf-floor{height:4px;margin:0}.shelf-mini .shelf-prod.on{transform:translateY(-3px);filter:drop-shadow(0 2px 5px rgba(255,200,0,.9))}.shelf-mini .shelf-prod.on .shelf-card{outline:2px solid gold;outline-offset:1px}
+@media(max-width:520px){.shelf-multi-grid{gap:4px;padding:4px}.shelf-mini .shelf-sign{font-size:9px;padding:4px 1px}.shelf-mini .shelf-row{min-height:10px}.shelf-mini .shelf-svgwrap{height:8px}.shelf-mini .shelf-bn{font-size:5px}}
+</style>
 <script>
-let db=[];
+let db=[], listEditing=false, activeListHitIds=[];
 function loadDB(){try{db=JSON.parse(localStorage.getItem('mag_v2')||'[]');}catch(e){db=[];}updateCount();}
 function saveDB(){localStorage.setItem('mag_v2',JSON.stringify(db));updateCount();}
-function updateCount(){document.getElementById('db-count').textContent=db.length+' towarów';}
-function showTab(n){['add','scan-list','list'].forEach(t=>{document.getElementById('panel-'+t).classList.toggle('active',t===n);document.getElementById('tab-'+t).classList.toggle('active',t===n);});if(n==='list')renderList();}
+function updateCount(){document.getElementById('db-count').textContent=db.length+' towarów';updateStartStatus();}
+function showTab(n){['worker','add','scan-list','list','shelf'].forEach(t=>{document.getElementById('panel-'+t).classList.toggle('active',t===n);document.getElementById('tab-'+t)?.classList.toggle('active',t===n);});if(n==='list')renderList();if(n==='shelf'){if(activeShelfMatches.length||activeShelfKey){document.getElementById('shelf-picker').style.display='none';document.getElementById('shelf-view').style.display='block';}else{renderShelfPicker();}}}
 const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
 let recognition=null,listening=false,restartTimer=null;
 function toggleListening(){if(listening)stopListening();else startListening();}
@@ -175,14 +261,63 @@ function searchProduct(digits){
   } else if(matches.length===1){
     const m=matches[0];card.className='result-card found';
     card.innerHTML=`<div class="result-name">${m.name}</div><div class="result-loc-label">Pozycja</div><div class="result-loc">${m.location}</div>`;
-    speak(`${m.name}, pozycja ${m.location.split('').join(' ')}`);
   } else {
     card.className='result-card found';
     card.innerHTML=`<div class="result-name">Znaleziono ${matches.length} (EAN: ...${digits})</div>`+matches.slice(0,5).map(m=>`<div style="display:flex;justify-content:space-between;padding:6px 0;border-top:1px solid #BBDEFB"><span style="font-size:13px">${m.name}</span><span style="font-family:monospace;font-weight:700;color:#0C447C">${m.location}</span></div>`).join('');
-    speak('Znaleziono '+matches.length+' towarów. '+matches.slice(0,3).map(m=>`${m.name}, pozycja ${m.location.split('').join(' ')}`).join('. '));
   }
 }
-function speak(text){if(!window.speechSynthesis)return;speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.lang='pl-PL';u.rate=0.95;speechSynthesis.speak(u);}
+let plVoice=null;
+function pickPolishVoice(){
+  if(!window.speechSynthesis)return;
+  const voices=speechSynthesis.getVoices();
+  plVoice=voices.find(v=>v.lang==='pl-PL')||voices.find(v=>v.lang&&v.lang.startsWith('pl'))||null;
+}
+if(window.speechSynthesis){
+  pickPolishVoice();
+  speechSynthesis.onvoiceschanged=pickPolishVoice;
+}
+function normalizeName(name){
+  const raw=String(name||'').trim();
+  const map={
+    'Phillips_str_1':'Philips 1',
+    'Phillips_str_2':'Philips 2',
+    'Phillips_Hue':'Philips Hue',
+    'Flair_str_1':'Flair 1',
+    'Flair_str_2':'Flair 2',
+    'Jarzeniowki_str_1':'Jarzeniówki 1',
+    'Jarzeniowki_str_2':'Jarzeniówki 2',
+    'Radius_Led':'Radium',
+    'Radium_Led':'Radium',
+    'Ledvance':'Ledvance',
+    'Sylvania':'Sylvania',
+    'specjale':'Specjalne',
+    'nan':'Jarzeniówki 2'
+  };
+  return map[raw]||raw.replace(/_/g,' ');
+}
+function shelfLabel(key, label){
+  const map={
+    philips:'Philips LED',
+    sylvania:'Sylvania LED',
+    ledvance:'Ledvance',
+    philips_hue:'Philips Hue',
+    flair:'Flair LED',
+    jarzeniowki:'Jarzeniówki',
+    specjale:'Specjalne',
+    radium:'Radium'
+  };
+  return map[key]||label||key;
+}
+function speak(text){
+  if(!window.speechSynthesis)return;
+  speechSynthesis.cancel();
+  const clean=String(text).replace(/_/g,' ');
+  const u=new SpeechSynthesisUtterance(clean);
+  u.lang='pl-PL';
+  u.rate=0.95;
+  if(plVoice)u.voice=plVoice;
+  speechSynthesis.speak(u);
+}
 function saveItem(){
   const ean=document.getElementById('f-ean').value.trim(),name=document.getElementById('f-name').value.trim(),loc=document.getElementById('f-loc').value.trim();
   if(!ean||!name||!loc){alert('Wypełnij wszystkie pola!');return;}
@@ -211,15 +346,548 @@ function importCSVList(event){
   };reader.readAsText(file,'UTF-8');
 }
 function renderList(){
-  const q=(document.getElementById('search-input')?.value||'').toLowerCase().trim();
+  const q=(document.getElementById('search-input').value||'').toLowerCase().trim();
   const wrap=document.getElementById('list-wrap');
+  wrap.classList.toggle('compact', activeListHitIds.length>0);
   if(db.length===0){wrap.innerHTML='<div class="empty-state">Brak towarów w bazie</div>';return;}
-  const filtered=db.filter(i=>!q||i.name.toLowerCase().includes(q)||i.ean.includes(q)||i.location.includes(q));
+  const filtered=db.filter(i=>!q||i.name.toLowerCase().includes(q)||i.ean.includes(q)||String(i.location).includes(q));
   if(filtered.length===0){wrap.innerHTML='<div class="empty-state">Brak wyników</div>';return;}
   const groups={};filtered.forEach(r=>{if(!groups[r.name])groups[r.name]=[];groups[r.name].push(r);});
-  wrap.innerHTML=Object.entries(groups).map(([ln,rows])=>`<div class="list-group-header">${ln} (${rows.length})</div>${rows.map(item=>{const idx=db.indexOf(item);return`<div class="item-card"><div class="item-loc">${item.location||'?'}</div><div class="item-info"><div class="item-ean">${item.ean}</div></div><button class="item-del" onclick="deleteItem(${idx})">✕</button></div>`;}).join('')}`).join('');
+  wrap.innerHTML=Object.entries(groups).map(([ln,rows])=>'<div class="list-group-header">'+ln+' ('+rows.length+')</div>'+rows.map(item=>{const idx=db.indexOf(item);const hit=activeListHitIds.includes(itemKey(item))?' hit':'';return '<div class="item-card'+hit+'" id="list-item-'+idx+'"><div class="item-loc">'+(item.location||'')+'</div><div class="item-info"><div class="item-ean">'+item.ean+'</div></div>'+(listEditing?'<div class="item-actions"><button class="item-edit" onclick="editListItem('+idx+')">Edytuj</button><button class="item-del" onclick="deleteItem('+idx+')">Usuń</button></div>':'')+'</div>';}).join('')).join('');
 }
+function editListItem(idx){const item=db[idx];if(!item)return;const loc=prompt('Nowa pozycja',item.location);if(loc===null)return;item.location=String(loc).trim();saveDB();renderList();}
 function deleteItem(idx){if(!confirm('Usunąć EAN: '+db[idx]?.ean+'?'))return;db.splice(idx,1);saveDB();renderList();}
+const SHELVES = {
+  "philips": {
+    label: "PHILIPS LED-LEUCHTMITTEL",
+    rows: [[1, 12], [13, 31], [32, 44], [45, 57], [58, 69]],
+    items: {
+      "1": {ean:"8719514324213",name:"Phillips_str_1"},
+      "2": {ean:"8719514324398",name:"Phillips_str_1"},
+      "3": {ean:"8719514323773",name:"Phillips_str_1"},
+      "4": {ean:"8719514323858",name:"Phillips_str_1"},
+      "5": {ean:"8719514323834",name:"Phillips_str_1"},
+      "6": {ean:"8719514324039",name:"Phillips_str_1"},
+      "7": {ean:"8719514324114",name:"Phillips_str_1"},
+      "8": {ean:"8718699774110",name:"Phillips_str_1"},
+      "9": {ean:"8718699774233",name:"Phillips_str_1"},
+      "10": {ean:"8718699721674",name:"Phillips_str_1"},
+      "11": {ean:"8718699774097",name:"Phillips_str_1"},
+      "12": {ean:"8718699773991",name:"Phillips_str_1"},
+      "13": {ean:"8720169310797",name:"Phillips_str_1"},
+      "14": {ean:"8720169310834",name:"Phillips_str_1"},
+      "15": {ean:"8720169310872",name:"Phillips_str_1"},
+      "16": {ean:"8720169187535",name:"Phillips_str_1"},
+      "17": {ean:"8720169187696",name:"Phillips_str_1"},
+      "18": {ean:"8720169187856",name:"Phillips_str_1"},
+      "19": {ean:"8720169188013",name:"Phillips_str_1"},
+      "20": {ean:"8720169310636",name:"Phillips_str_1"},
+      "21": {ean:"8720169310711",name:"Phillips_str_1"},
+      "22": {ean:"8720169188198",name:"Phillips_str_1"},
+      "23": {ean:"8720169187498",name:"Phillips_str_1"},
+      "24": {ean:"8720169187658",name:"Phillips_str_1"},
+      "25": {ean:"8720169187818",name:"Phillips_str_1"},
+      "26": {ean:"8720169187979",name:"Phillips_str_1"},
+      "27": {ean:"8720169202689",name:"Phillips_str_1"},
+      "28": {ean:"8720169202702",name:"Phillips_str_1"},
+      "29": {ean:"8721103047588",name:"Phillips_str_1"},
+      "30": {ean:"8721103047564",name:"Phillips_str_1"},
+      "31": {ean:"8720169194830",name:"Phillips_str_1"},
+      "32": {ean:"8718699763374",name:"Phillips_str_1"},
+      "33": {ean:"8718699763398",name:"Phillips_str_1"},
+      "34": {ean:"8718699762698",name:"Phillips_str_1"},
+      "35": {ean:"8718699763411",name:"Phillips_str_1"},
+      "36": {ean:"8718699763435",name:"Phillips_str_1"},
+      "37": {ean:"8718699762834",name:"Phillips_str_1"},
+      "38": {ean:"8718699763459",name:"Phillips_str_1"},
+      "39": {ean:"8718699763473",name:"Phillips_str_1"},
+      "40": {ean:"8718699763312",name:"Phillips_str_1"},
+      "41": {ean:"8718699763336",name:"Phillips_str_1"},
+      "42": {ean:"8718699763251",name:"Phillips_str_1"},
+      "43": {ean:"8718699763275",name:"Phillips_str_1"},
+      "44": {ean:"8718699764517",name:"Phillips_str_1"},
+      "45": {ean:"8718699777531",name:"Phillips_str_2"},
+      "46": {ean:"8718699763077",name:"Phillips_str_2"},
+      "47": {ean:"8718699762193",name:"Phillips_str_2"},
+      "48": {ean:"8718699777555",name:"Phillips_str_2"},
+      "49": {ean:"8718699763152",name:"Phillips_str_2"},
+      "50": {ean:"8718699763299",name:"Phillips_str_2"},
+      "51": {ean:"8718699763176",name:"Phillips_str_2"},
+      "52": {ean:"8718699761998",name:"Phillips_str_2"},
+      "53": {ean:"8718699777579",name:"Phillips_str_2"},
+      "54": {ean:"8718699762995",name:"Phillips_str_2"},
+      "55": {ean:"8720169301634",name:"Phillips_str_2"},
+      "56": {ean:"8720169301696",name:"Phillips_str_2"},
+      "57": {ean:"8720169300491",name:"Phillips_str_2"},
+      "58": {ean:"8718699773755",name:"Phillips_str_2"},
+      "59": {ean:"8718699773793",name:"Phillips_str_2"},
+      "60": {ean:"8718699774219",name:"Phillips_str_2"},
+      "61": {ean:"8718699773816",name:"Phillips_str_2"},
+      "62": {ean:"8718699773830",name:"Phillips_str_2"},
+      "63": {ean:"8718699773656",name:"Phillips_str_2"},
+      "64": {ean:"8718699774158",name:"Phillips_str_2"},
+      "65": {ean:"8718699774134",name:"Phillips_str_2"},
+      "66": {ean:"8718699774059",name:"Phillips_str_2"},
+      "67": {ean:"8719514307605",name:"Phillips_str_2"},
+      "68": {ean:"8719514307629",name:"Phillips_str_2"},
+      "69": {ean:"8718699773977",name:"Phillips_str_2"},
+    }
+  },
+  "sylvania": {
+    label: "SYLVANIA LED-LEUCHTMITTEL",
+    rows: [[1, 6], [7, 16], [17, 26], [27, 31], [32, 42]],
+    items: {
+      "1": {ean:"295770",name:"Sylvania"},
+      "2": {ean:"295855",name:"Sylvania"},
+      "3": {ean:"295909",name:"Sylvania"},
+      "4": {ean:"293189",name:"Sylvania"},
+      "5": {ean:"295947",name:"Sylvania"},
+      "6": {ean:"296265",name:"Sylvania"},
+      "7": {ean:"295626",name:"Sylvania"},
+      "8": {ean:"296258",name:"Sylvania"},
+      "9": {ean:"296326",name:"Sylvania"},
+      "10": {ean:"296043",name:"Sylvania"},
+      "11": {ean:"296104",name:"Sylvania"},
+      "12": {ean:"296159",name:"Sylvania"},
+      "13": {ean:"296093",name:"Sylvania"},
+      "14": {ean:"291154",name:"Sylvania"},
+      "15": {ean:"291192",name:"Sylvania"},
+      "16": {ean:"291420",name:"Sylvania"},
+      "17": {ean:"291741",name:"Sylvania"},
+      "18": {ean:"291826",name:"Sylvania"},
+      "19": {ean:"291859",name:"Sylvania"},
+      "20": {ean:"292168",name:"Sylvania"},
+      "21": {ean:"292205",name:"Sylvania"},
+      "22": {ean:"292243",name:"Sylvania"},
+      "23": {ean:"292380",name:"Sylvania"},
+      "24": {ean:"295787",name:"Sylvania"},
+      "25": {ean:"295879",name:"Sylvania"},
+      "26": {ean:"295916",name:"Sylvania"},
+      "27": {ean:"293196",name:"Sylvania"},
+      "28": {ean:"295954",name:"Sylvania"},
+      "29": {ean:"296289",name:"Sylvania"},
+      "30": {ean:"296272",name:"Sylvania"},
+      "31": {ean:"296340",name:"Sylvania"},
+      "32": {ean:"292076",name:"Sylvania"},
+      "33": {ean:"296050",name:"Sylvania"},
+      "34": {ean:"296111",name:"Sylvania"},
+      "35": {ean:"296166",name:"Sylvania"},
+      "36": {ean:"291123",name:"Sylvania"},
+      "37": {ean:"291161",name:"Sylvania"},
+      "38": {ean:"291208",name:"Sylvania"},
+      "39": {ean:"292175",name:"Sylvania"},
+      "40": {ean:"292212",name:"Sylvania"},
+      "41": {ean:"292250",name:"Sylvania"},
+      "42": {ean:"29661",name:"Sylvania"},
+    }
+  },
+  "ledvance": {
+    label: "LEDVANCE",
+    rows: [[1, 12], [13, 22], [23, 36], [37, 46], [47, 52]],
+    items: {
+      "1": {ean:"4058075570917",name:"Ledvance"},
+      "2": {ean:"4058075731363",name:"Ledvance"},
+      "3": {ean:"4058075730052",name:"Ledvance"},
+      "4": {ean:"4058075537248",name:"Ledvance"},
+      "5": {ean:"4058075594784",name:"Ledvance"},
+      "6": {ean:"4058075532120",name:"Ledvance"},
+      "7": {ean:"4099854293238",name:"Ledvance"},
+      "8": {ean:"4099854088537",name:"Ledvance"},
+      "9": {ean:"4058075486010",name:"Ledvance"},
+      "10": {ean:"4058075486034",name:"Ledvance"},
+      "11": {ean:"4058075485693",name:"Ledvance"},
+      "12": {ean:"4058075486058",name:"Ledvance"},
+      "13": {ean:"4058075609754",name:"Ledvance"},
+      "14": {ean:"4058075778559",name:"Ledvance"},
+      "15": {ean:"4058075778597",name:"Ledvance"},
+      "16": {ean:"4058075779075",name:"Ledvance"},
+      "17": {ean:"4058075609778",name:"Ledvance"},
+      "18": {ean:"4058075778610",name:"Ledvance"},
+      "19": {ean:"4058075778658",name:"Ledvance"},
+      "20": {ean:"4058075609792",name:"Ledvance"},
+      "21": {ean:"4058075610521",name:"Ledvance"},
+      "22": {ean:"4058075528239",name:"Ledvance"},
+      "23": {ean:"4058075609815",name:"Ledvance"},
+      "24": {ean:"4306517604141",name:"Ledvance"},
+      "25": {ean:"4306517604189",name:"Ledvance"},
+      "26": {ean:"4306517604585",name:"Ledvance"},
+      "27": {ean:"4306517604561",name:"Ledvance"},
+      "28": {ean:"4306517604165",name:"Ledvance"},
+      "29": {ean:"4306517604547",name:"Ledvance"},
+      "30": {ean:"4058075778382",name:"Ledvance"},
+      "31": {ean:"4058075778818",name:"Ledvance"},
+      "32": {ean:"4058075778412",name:"Ledvance"},
+      "33": {ean:"4058075778832",name:"Ledvance"},
+      "34": {ean:"4058075619012",name:"Ledvance"},
+      "35": {ean:"4058075778450",name:"Ledvance"},
+      "36": {ean:"4058075778870",name:"Ledvance"},
+      "37": {ean:"4058075609716",name:"Ledvance"},
+      "38": {ean:"4058075778498",name:"Ledvance"},
+      "39": {ean:"4058075778511",name:"Ledvance"},
+      "40": {ean:"4058075778535",name:"Ledvance"},
+      "41": {ean:"4058075609730",name:"Ledvance"},
+      "42": {ean:"4058075778672",name:"Ledvance"},
+      "43": {ean:"4058075778979",name:"Ledvance"},
+      "44": {ean:"4058075778702",name:"Ledvance"},
+      "45": {ean:"4058075778726",name:"Ledvance"},
+      "46": {ean:"4058075779013",name:"Ledvance"},
+      "47": {ean:"4058075609693",name:"Ledvance"},
+      "48": {ean:"4058075528291",name:"Ledvance"},
+      "49": {ean:"4058075528277",name:"Ledvance"},
+      "50": {ean:"4058075515932",name:"Ledvance"},
+      "51": {ean:"4058075523838",name:"Ledvance"},
+      "52": {ean:"4058075504806",name:"Ledvance"},
+    }
+  },
+  "philips_hue": {
+    label: "PHILIPS HUE",
+    rows: [[1, 7], [8, 19], [20, 25], [26, 29], [30, 36]],
+    items: {
+      "1": {ean:"8720169155114",name:"Phillips_Hue"},
+      "2": {ean:"8719514342620",name:"Phillips_Hue"},
+      "3": {ean:"8719514274617",name:"Phillips_Hue"},
+      "4": {ean:"8719514440999",name:"Phillips_Hue"},
+      "5": {ean:"8719514440937",name:"Phillips_Hue"},
+      "6": {ean:"8719514342125",name:"Phillips_Hue"},
+      "7": {ean:"8719514342309",name:"Phillips_Hue"},
+      "8": {ean:"8719514318045",name:"Phillips_Hue"},
+      "9": {ean:"8718699688820",name:"Phillips_Hue"},
+      "10": {ean:"8719514342989",name:"Phillips_Hue"},
+      "11": {ean:"8719514343009",name:"Phillips_Hue"},
+      "12": {ean:"8719514302235",name:"Phillips_Hue"},
+      "13": {ean:"8719514301429",name:"Phillips_Hue"},
+      "14": {ean:"8719514301467",name:"Phillips_Hue"},
+      "15": {ean:"8719514301481",name:"Phillips_Hue"},
+      "16": {ean:"8720169364707",name:"Phillips_Hue"},
+      "17": {ean:"8720169365797",name:"Phillips_Hue"},
+      "18": {ean:"8719514320666",name:"Phillips_Hue"},
+      "19": {ean:"8719514320628",name:"Phillips_Hue"},
+      "20": {ean:"8720169364806",name:"Phillips_Hue"},
+      "21": {ean:"8720169364868",name:"Phillips_Hue"},
+      "22": {ean:"8719514356658",name:"Phillips_Hue"},
+      "23": {ean:"8719514356733",name:"Phillips_Hue"},
+      "24": {ean:"8720169364066",name:"Phillips_Hue"},
+      "25": {ean:"8720169365735",name:"Phillips_Hue"},
+      "26": {ean:"8719514356719",name:"Phillips_Hue"},
+      "27": {ean:"8720169230231",name:"Phillips_Hue"},
+      "28": {ean:"8720169230033",name:"Phillips_Hue"},
+      "29": {ean:"8720169229815",name:"Phillips_Hue"},
+      "30": {ean:"8719514289130",name:"Phillips_Hue"},
+      "31": {ean:"8719514291232",name:"Phillips_Hue"},
+      "32": {ean:"8719514291416",name:"Phillips_Hue"},
+      "33": {ean:"8721103087812",name:"Phillips_Hue"},
+      "34": {ean:"8721103088116",name:"Phillips_Hue"},
+      "35": {ean:"8721103088611",name:"Phillips_Hue"},
+      "36": {ean:"8721103089090",name:"Phillips_Hue"},
+    }
+  },
+  "flair": {
+    label: "FLAIR LED",
+    rows: [[1, 20], [21, 43], [44, 57], [58, 78], [79, 86]],
+    items: {
+      "1": {ean:"4306517597832",name:"Flair_str_1"},
+      "2": {ean:"4306517597856",name:"Flair_str_1"},
+      "3": {ean:"4306517604998",name:"Flair_str_1"},
+      "4": {ean:"4306517598150",name:"Flair_str_1"},
+      "5": {ean:"4306517598174",name:"Flair_str_1"},
+      "6": {ean:"4306517598198",name:"Flair_str_1"},
+      "7": {ean:"4306517598235",name:"Flair_str_1"},
+      "8": {ean:"4306517598259",name:"Flair_str_1"},
+      "9": {ean:"4306517598211",name:"Flair_str_1"},
+      "10": {ean:"4306517598051",name:"Flair_str_1"},
+      "11": {ean:"4306517598082",name:"Flair_str_1"},
+      "12": {ean:"4306517598099",name:"Flair_str_1"},
+      "13": {ean:"4306516560387",name:"Flair_str_1"},
+      "14": {ean:"4306516560387",name:"Flair_str_1"},
+      "15": {ean:"4306516560400",name:"Flair_str_1"},
+      "16": {ean:"4306516560400",name:"Flair_str_1"},
+      "17": {ean:"4306516560400",name:"Flair_str_1"},
+      "18": {ean:"4306516560394",name:"Flair_str_1"},
+      "19": {ean:"4306516560394",name:"Flair_str_1"},
+      "20": {ean:"4306517597931",name:"Flair_str_1"},
+      "21": {ean:"4306517597979",name:"Flair_str_1"},
+      "22": {ean:"4306517597993",name:"Flair_str_1"},
+      "23": {ean:"4306517598013",name:"Flair_str_1"},
+      "24": {ean:"4306517598037",name:"Flair_str_1"},
+      "25": {ean:"4306517597870",name:"Flair_str_1"},
+      "26": {ean:"4306517597894",name:"Flair_str_1"},
+      "27": {ean:"4306517597917",name:"Flair_str_1"},
+      "28": {ean:"4306517598358",name:"Flair_str_1"},
+      "29": {ean:"4306517598372",name:"Flair_str_1"},
+      "30": {ean:"4306517598341",name:"Flair_str_1"},
+      "31": {ean:"4306517598334",name:"Flair_str_1"},
+      "32": {ean:"4306517598136",name:"Flair_str_1"},
+      "33": {ean:"4306517598112",name:"Flair_str_1"},
+      "34": {ean:"4306516560417",name:"Flair_str_1"},
+      "35": {ean:"4306516560417",name:"Flair_str_1"},
+      "36": {ean:"4306516560417",name:"Flair_str_1"},
+      "37": {ean:"4306516560424",name:"Flair_str_1"},
+      "38": {ean:"4306516560424",name:"Flair_str_1"},
+      "39": {ean:"4306516560424",name:"Flair_str_1"},
+      "40": {ean:"4306516560431",name:"Flair_str_1"},
+      "41": {ean:"4306516560707",name:"Flair_str_1"},
+      "42": {ean:"4306517603564",name:"Flair_str_2"},
+      "43": {ean:"4306517603571",name:"Flair_str_2"},
+      "44": {ean:"4306517603588",name:"Flair_str_2"},
+      "45": {ean:"4306517603595",name:"Flair_str_2"},
+      "46": {ean:"4306517603540",name:"Flair_str_2"},
+      "47": {ean:"4306517603557",name:"Flair_str_2"},
+      "48": {ean:"4306517603601",name:"Flair_str_2"},
+      "49": {ean:"4306517603618",name:"Flair_str_2"},
+      "50": {ean:"4306517603625",name:"Flair_str_2"},
+      "51": {ean:"4306517603625",name:"Flair_str_2"},
+      "52": {ean:"4306517603823",name:"Flair_str_2"},
+      "53": {ean:"4306517603847",name:"Flair_str_2"},
+      "54": {ean:"4306517603854",name:"Flair_str_2"},
+      "55": {ean:"4306517603861",name:"Flair_str_2"},
+      "56": {ean:"4306517603649",name:"Flair_str_2"},
+      "57": {ean:"4306517603663",name:"Flair_str_2"},
+      "58": {ean:"4306517603687",name:"Flair_str_2"},
+      "59": {ean:"4306517603960",name:"Flair_str_2"},
+      "60": {ean:"4306517603977",name:"Flair_str_2"},
+      "61": {ean:"4306517604004",name:"Flair_str_2"},
+      "62": {ean:"4306517604011",name:"Flair_str_2"},
+      "63": {ean:"4306517603984",name:"Flair_str_2"},
+      "64": {ean:"4306517603885",name:"Flair_str_2"},
+      "65": {ean:"4306517603908",name:"Flair_str_2"},
+      "66": {ean:"4306517603786",name:"Flair_str_2"},
+      "67": {ean:"4306517603809",name:"Flair_str_2"},
+      "68": {ean:"4306517603700",name:"Flair_str_2"},
+      "69": {ean:"4306517603717",name:"Flair_str_2"},
+      "70": {ean:"4306517603724",name:"Flair_str_2"},
+      "71": {ean:"4306517603724",name:"Flair_str_2"},
+      "72": {ean:"4306517603731",name:"Flair_str_2"},
+      "73": {ean:"4306517603748",name:"Flair_str_2"},
+      "74": {ean:"4306517603779",name:"Flair_str_2"},
+      "75": {ean:"4306517603922",name:"Flair_str_2"},
+      "76": {ean:"4306517673946",name:"Flair_str_2"},
+      "77": {ean:"4306517679514",name:"Flair_str_2"},
+      "78": {ean:"4306517279521",name:"Flair_str_2"},
+      "79": {ean:"4306517679538",name:"Flair_str_2"},
+      "80": {ean:"4306517679491",name:"Flair_str_2"},
+      "81": {ean:"4306517689507",name:"Flair_str_2"},
+      "82": {ean:"4306514680367",name:"Flair_str_2"},
+      "83": {ean:"4306517680381",name:"Flair_str_2"},
+      "84": {ean:"4306517680404",name:"Flair_str_2"},
+      "85": {ean:"4306517680428",name:"Flair_str_2"},
+      "86": {ean:"4306517680442",name:"Flair_str_2"},
+    }
+  },
+  "jarzeniowki": {
+    label: "LEUCHTSTOFFROHREN",
+    rows: [[1, 22], [23, 38], [39, 63]],
+    items: {
+      "1": {ean:"8720169309548",name:"Jarzeniowki_str_1"},
+      "2": {ean:"8720169254565",name:"Jarzeniowki_str_1"},
+      "3": {ean:"8720169309586",name:"Jarzeniowki_str_1"},
+      "4": {ean:"8720169254602",name:"Jarzeniowki_str_1"},
+      "5": {ean:"8720169309562",name:"Jarzeniowki_str_1"},
+      "6": {ean:"8720169254589",name:"Jarzeniowki_str_1"},
+      "7": {ean:"8720169309609",name:"Jarzeniowki_str_1"},
+      "8": {ean:"8720169254626",name:"Jarzeniowki_str_1"},
+      "9": {ean:"5410288302393",name:"Jarzeniowki_str_1"},
+      "10": {ean:"5410288302977",name:"Jarzeniowki_str_1"},
+      "11": {ean:"4306517604417",name:"Jarzeniowki_str_1"},
+      "12": {ean:"4306517604455",name:"Jarzeniowki_str_1"},
+      "13": {ean:"4306517604493",name:"Jarzeniowki_str_1"},
+      "14": {ean:"4306517604431",name:"Jarzeniowki_str_1"},
+      "15": {ean:"4306517604479",name:"Jarzeniowki_str_1"},
+      "16": {ean:"5410288304516",name:"Jarzeniowki_str_1"},
+      "17": {ean:"5410288302731",name:"Jarzeniowki_str_1"},
+      "18": {ean:"5410288292755",name:"Jarzeniowki_str_1"},
+      "19": {ean:"5410288292779",name:"Jarzeniowki_str_1"},
+      "20": {ean:"5410288292748",name:"Jarzeniowki_str_1"},
+      "21": {ean:"5410288282762",name:"Jarzeniowki_str_1"},
+      "22": {ean:"5410288282786",name:"Jarzeniowki_str_1"},
+      "23": {ean:"8720169309500",name:"Jarzeniowki_str_2"},
+      "24": {ean:"8720169309524",name:"Jarzeniowki_str_2"},
+      "25": {ean:"5410288302362",name:"Jarzeniowki_str_2"},
+      "26": {ean:"5410288302850",name:"Jarzeniowki_str_2"},
+      "27": {ean:"5410288302560",name:"Jarzeniowki_str_2"},
+      "28": {ean:"5410288302867",name:"Jarzeniowki_str_2"},
+      "29": {ean:"5410288302201",name:"Jarzeniowki_str_2"},
+      "30": {ean:"5410288302218",name:"Jarzeniowki_str_2"},
+      "31": {ean:"8720169287525",name:"Jarzeniowki_str_2"},
+      "32": {ean:"8718895541296",name:"Jarzeniowki_str_2"},
+      "33": {ean:"5410288302256",name:"Jarzeniowki_str_2"},
+      "34": {ean:"5410288302249",name:"Jarzeniowki_str_2"},
+      "35": {ean:"5410288302232",name:"Jarzeniowki_str_2"},
+      "36": {ean:"5410288302263",name:"Jarzeniowki_str_2"},
+      "37": {ean:"5410288302270",name:"Jarzeniowki_str_2"},
+      "38": {ean:"5410288302287",name:"nan"},
+      "39": {ean:"4306517626310",name:"Jarzeniowki_str_2"},
+      "40": {ean:"4306517626341",name:"Jarzeniowki_str_2"},
+      "41": {ean:"4306517626327",name:"Jarzeniowki_str_2"},
+      "42": {ean:"4306517626334",name:"Jarzeniowki_str_2"},
+      "43": {ean:"8720169309623",name:"Jarzeniowki_str_2"},
+      "44": {ean:"8720169309647",name:"Jarzeniowki_str_2"},
+      "45": {ean:"8720169308862",name:"Jarzeniowki_str_2"},
+      "46": {ean:"8720169308909",name:"Jarzeniowki_str_2"},
+      "47": {ean:"8720169308886",name:"Jarzeniowki_str_2"},
+      "48": {ean:"8720169308923",name:"Jarzeniowki_str_2"},
+      "49": {ean:"4058075822403",name:"Jarzeniowki_str_2"},
+      "50": {ean:"4058075822427",name:"Jarzeniowki_str_2"},
+      "51": {ean:"4058075823655",name:"Jarzeniowki_str_2"},
+      "52": {ean:"4058075823679",name:"Jarzeniowki_str_2"},
+      "53": {ean:"5410288302874",name:"Jarzeniowki_str_2"},
+      "54": {ean:"5410288302577",name:"Jarzeniowki_str_2"},
+      "55": {ean:"5410288302881",name:"Jarzeniowki_str_2"},
+      "56": {ean:"5410288302898",name:"Jarzeniowki_str_2"},
+      "57": {ean:"5410288302584",name:"Jarzeniowki_str_2"},
+      "58": {ean:"5410288302904",name:"Jarzeniowki_str_2"},
+      "59": {ean:"5410288302591",name:"Jarzeniowki_str_2"},
+      "60": {ean:"5410288302607",name:"Jarzeniowki_str_2"},
+      "61": {ean:"4306517626358",name:"Jarzeniowki_str_2"},
+      "62": {ean:"8719514378056",name:"Jarzeniowki_str_2"},
+      "63": {ean:"8719514378032",name:"Jarzeniowki_str_2"},
+    }
+  },
+  "specjale": {
+    label: "SPEZIALLAMPEN",
+    rows: [[1, 10], [11, 18], [19, 29], [30, 43], [44, 54], [55, 61], [62, 69]],
+    items: {
+      "1": {ean:"4020058851263",name:"specjale"},
+      "2": {ean:"4020058802253",name:"specjale"},
+      "3": {ean:"4306517617173",name:"specjale"},
+      "4": {ean:"4306517617180",name:"specjale"},
+      "5": {ean:"4020058833311",name:"specjale"},
+      "6": {ean:"4020058853755",name:"specjale"},
+      "7": {ean:"4306517591256",name:"specjale"},
+      "8": {ean:"4306517596845",name:"specjale"},
+      "9": {ean:"4306517578297",name:"specjale"},
+      "10": {ean:"4020058659477",name:"specjale"},
+      "11": {ean:"4020058562246",name:"specjale"},
+      "12": {ean:"4306517593687",name:"specjale"},
+      "13": {ean:"4020058836944",name:"specjale"},
+      "14": {ean:"4306517592697",name:"specjale"},
+      "15": {ean:"4306517678310",name:"specjale"},
+      "16": {ean:"4306517679484",name:"specjale"},
+      "17": {ean:"8718669774073",name:"specjale"},
+      "18": {ean:"4020058853342",name:"specjale"},
+      "19": {ean:"4020058221522",name:"specjale"},
+      "20": {ean:"4020058855722",name:"specjale"},
+      "21": {ean:"4306517813779",name:"specjale"},
+      "22": {ean:"5410288221552",name:"specjale"},
+      "23": {ean:"5410288225746",name:"specjale"},
+      "24": {ean:"4020058565760",name:"specjale"},
+      "25": {ean:"4020058851539",name:"specjale"},
+      "26": {ean:"9716880783786",name:"specjale"},
+      "27": {ean:"4306517610371",name:"specjale"},
+      "28": {ean:"4020058561569",name:"specjale"},
+      "29": {ean:"8718699775784",name:"specjale"},
+      "30": {ean:"8718699771935",name:"specjale"},
+      "31": {ean:"8718699771959",name:"specjale"},
+      "32": {ean:"4306517275266",name:"specjale"},
+      "33": {ean:"4306517275235",name:"specjale"},
+      "34": {ean:"2007060007720",name:"specjale"},
+      "35": {ean:"4000870600157",name:"specjale"},
+      "36": {ean:"4000870600100",name:"specjale"},
+      "37": {ean:"8719514338715",name:"specjale"},
+      "38": {ean:"8711869012550",name:"specjale"},
+      "39": {ean:"8719501383211",name:"specjale"},
+      "40": {ean:"5410288686968",name:"specjale"},
+      "41": {ean:"4020058851010",name:"specjale"},
+      "42": {ean:"4020058851003",name:"specjale"},
+      "43": {ean:"4020058851027",name:"specjale"},
+      "44": {ean:"4306517614379",name:"specjale"},
+      "45": {ean:"4020058652390",name:"specjale"},
+      "46": {ean:"4020058652277",name:"specjale"},
+      "47": {ean:"4306517602260",name:"specjale"},
+      "48": {ean:"4306517602284",name:"specjale"},
+      "49": {ean:"4306517622222",name:"specjale"},
+      "50": {ean:"4306517602246",name:"specjale"},
+      "51": {ean:"4306517802208",name:"specjale"},
+      "52": {ean:"4306517902185",name:"specjale"},
+      "53": {ean:"4306517901652",name:"specjale"},
+      "54": {ean:"4306517908392",name:"specjale"},
+      "55": {ean:"4306517803144",name:"specjale"},
+      "56": {ean:"4306517803120",name:"specjale"},
+      "57": {ean:"4306517803168",name:"specjale"},
+      "58": {ean:"4306517802963",name:"specjale"},
+      "59": {ean:"4306517803021",name:"specjale"},
+      "60": {ean:"4306511902987",name:"specjale"},
+      "61": {ean:"4020058853007",name:"specjale"},
+      "62": {ean:"4306517705018",name:"specjale"},
+      "63": {ean:"4020058852949",name:"specjale"},
+      "64": {ean:"4306517705032",name:"specjale"},
+      "65": {ean:"4306517705056",name:"specjale"},
+      "66": {ean:"4306517701251",name:"specjale"},
+      "67": {ean:"4306517701232",name:"specjale"},
+      "68": {ean:"4020058853229",name:"specjale"},
+      "69": {ean:"4020058853205",name:"specjale"},
+    }
+  },
+  "radium": {
+    label: "RADIUM - TECHNISCHES LICHT",
+    rows: [[1, 18], [19, 35], [36, 51], [52, 64]],
+    items: {
+      "1": {ean:"4003558012226",name:"Radius_Led"},
+      "2": {ean:"4003558014152",name:"Radius_Led"},
+      "3": {ean:"4003558014176",name:"Radius_Led"},
+      "4": {ean:"4003558012257",name:"Radius_Led"},
+      "5": {ean:"4003558014442",name:"Radius_Led"},
+      "6": {ean:"4003558014138",name:"Radius_Led"},
+      "7": {ean:"4003558011403",name:"Radius_Led"},
+      "8": {ean:"4003558011403",name:"Radius_Led"},
+      "9": {ean:"4003558011489",name:"Radius_Led"},
+      "10": {ean:"4003558011526",name:"Radius_Led"},
+      "11": {ean:"4003558011564",name:"Radius_Led"},
+      "12": {ean:"4003558011601",name:"Radius_Led"},
+      "13": {ean:"4003558011649",name:"Radius_Led"},
+      "14": {ean:"4003558012233",name:"Radius_Led"},
+      "15": {ean:"4003558014169",name:"Radius_Led"},
+      "16": {ean:"4003558012271",name:"Radius_Led"},
+      "17": {ean:"4003558014459",name:"Radius_Led"},
+      "18": {ean:"4003558011724",name:"Radius_Led"},
+      "19": {ean:"4003558012189",name:"Radius_Led"},
+      "20": {ean:"4003558012189",name:"Radius_Led"},
+      "21": {ean:"4003558012257",name:"Radius_Led"},
+      "22": {ean:"4003558012257",name:"Radius_Led"},
+      "23": {ean:"4003558014442",name:"Radius_Led"},
+      "24": {ean:"4003558014138",name:"Radius_Led"},
+      "25": {ean:"4003558011410",name:"Radius_Led"},
+      "26": {ean:"4003558011410",name:"Radius_Led"},
+      "27": {ean:"4003558011496",name:"Radius_Led"},
+      "28": {ean:"4003558011496",name:"Radius_Led"},
+      "29": {ean:"4003558011533",name:"Radius_Led"},
+      "30": {ean:"4003558011571",name:"Radius_Led"},
+      "31": {ean:"4003558011571",name:"Radius_Led"},
+      "32": {ean:"4003558011618",name:"Radius_Led"},
+      "33": {ean:"4003558011656",name:"Radius_Led"},
+      "34": {ean:"4003558012189",name:"Radius_Led"},
+      "35": {ean:"4003558021731",name:"Radius_Led"},
+      "36": {ean:"4003558012196",name:"Radius_Led"},
+      "37": {ean:"4003558012196",name:"Radius_Led"},
+      "38": {ean:"4003558012226",name:"Radius_Led"},
+      "39": {ean:"4003558012257",name:"Radius_Led"},
+      "40": {ean:"4003558012257",name:"Radius_Led"},
+      "41": {ean:"4003558011427",name:"Radius_Led"},
+      "42": {ean:"4003558011427",name:"Radius_Led"},
+      "43": {ean:"4003558011502",name:"Radius_Led"},
+      "44": {ean:"4003558011502",name:"Radius_Led"},
+      "45": {ean:"4003558011540",name:"Radius_Led"},
+      "46": {ean:"4003558011588",name:"Radius_Led"},
+      "47": {ean:"4003558011588",name:"Radius_Led"},
+      "48": {ean:"4003558011625",name:"Radius_Led"},
+      "49": {ean:"4003558011663",name:"Radius_Led"},
+      "50": {ean:"4003558012196",name:"Radius_Led"},
+      "51": {ean:"4003558011748",name:"Radius_Led"},
+      "52": {ean:"4003558012202",name:"Radius_Led"},
+      "53": {ean:"4003558012202",name:"Radius_Led"},
+      "54": {ean:"4003558012226",name:"Radius_Led"},
+      "55": {ean:"4003558012257",name:"Radius_Led"},
+      "56": {ean:"4003558014138",name:"Radius_Led"},
+      "57": {ean:"4003558014084",name:"Radius_Led"},
+      "58": {ean:"4003558014084",name:"Radius_Led"},
+      "59": {ean:"4003558014107",name:"Radius_Led"},
+      "60": {ean:"4003558014107",name:"Radius_Led"},
+      "61": {ean:"4003558014114",name:"Radius_Led"},
+      "62": {ean:"4003558012202",name:"Radius_Led"},
+      "63": {ean:"4003558014145",name:"Radius_Led"},
+      "64": {ean:"4003558014121",name:"Radius_Led"},
+    }
+  },
+};
 const BUILTIN_DB=[
 {ean:"4306517597832",name:"Flair_str_1",location:"1"},
 {ean:"4306517597856",name:"Flair_str_1",location:"2"},
@@ -307,7 +975,6 @@ const BUILTIN_DB=[
 {ean:"4306517680404",name:"Flair_str_2",location:"84"},
 {ean:"4306517680428",name:"Flair_str_2",location:"85"},
 {ean:"4306517680442",name:"Flair_str_2",location:"86"},
-{ean:"8720169364868",name:"Ledvance",location:"0"},
 {ean:"4058075570917",name:"Ledvance",location:"1"},
 {ean:"4058075731363",name:"Ledvance",location:"2"},
 {ean:"4058075730052",name:"Ledvance",location:"3"},
@@ -609,7 +1276,7 @@ const BUILTIN_DB=[
 {ean:"291420",name:"Sylvania",location:"16"},
 {ean:"291741",name:"Sylvania",location:"17"},
 {ean:"291826",name:"Sylvania",location:"18"},
-{ean:"291895",name:"Sylvania",location:"19"},
+{ean:"291859",name:"Sylvania",location:"19"},
 {ean:"292168",name:"Sylvania",location:"20"},
 {ean:"292205",name:"Sylvania",location:"21"},
 {ean:"292243",name:"Sylvania",location:"22"},
@@ -709,8 +1376,313 @@ function preloadBuiltinDB(){
   for(const item of BUILTIN_DB){db.push({ean:item.ean,name:item.name,location:item.location,quantity:0,price:0});}
   saveDB();localStorage.setItem('mag_preloaded_v5','1');
 }
-loadDB();preloadBuiltinDB();
-setTimeout(()=>{startListening();},800);
+// === WIRTUALNE REGAŁY ===
+let activeShelfKey=null, activeShelfPos=[], activeShelfMatches=[];
+
+function shelfIcon(d){
+  d = d || '';
+  if(d.indexOf('GU10')>=0||d.indexOf('MR16')>=0||d.indexOf('MR11')>=0||d.indexOf('GU4')>=0)
+    return '<svg width="100%" height="100%" viewBox="0 0 44 44" preserveAspectRatio="xMidYMid meet"><rect x="14" y="32" width="16" height="7" rx="2" fill="#bbb"/><ellipse cx="22" cy="16" rx="18" ry="13" fill="#eef6ff" stroke="#c8d8e8"/><rect x="17" y="10" width="10" height="7" rx="1" fill="#bde"/></svg>';
+  if(d.indexOf('B35')>=0||d.indexOf('P45')>=0)
+    return '<svg width="100%" height="100%" viewBox="0 0 44 72" preserveAspectRatio="xMidYMid meet"><rect x="18" y="64" width="8" height="8" rx="1" fill="#c0c0c0"/><path d="M11,55 Q10,30 22,18 Q34,30 33,55 Z" fill="#fff6e0" stroke="#f0d070"/></svg>';
+  if(d.indexOf('G9')>=0||d.indexOf('G4')>=0)
+    return '<svg width="100%" height="100%" viewBox="0 0 44 60" preserveAspectRatio="xMidYMid meet"><rect x="17" y="50" width="10" height="9" rx="1" fill="#ccc"/><circle cx="22" cy="32" r="14" fill="#fff6e0" stroke="#f0d070"/></svg>';
+  if(d.indexOf('R39')>=0||d.indexOf('R50')>=0||d.indexOf('R63')>=0)
+    return '<svg width="100%" height="100%" viewBox="0 0 44 60" preserveAspectRatio="xMidYMid meet"><rect x="17" y="50" width="10" height="9" rx="1" fill="#ccc"/><path d="M12,45 L12,25 Q22,15 32,25 L32,45 Z" fill="#eef6ff" stroke="#c8d8e8"/></svg>';
+  if(d.indexOf('ST64')>=0||d.indexOf('G95')>=0||d.indexOf('A67')>=0)
+    return '<svg width="100%" height="100%" viewBox="0 0 44 68" preserveAspectRatio="xMidYMid meet"><rect x="17" y="59" width="10" height="9" rx="1" fill="#c0c0c0"/><circle cx="22" cy="33" r="18" fill="#fff6e0" stroke="#f0d070"/></svg>';
+  if(d.indexOf('Röhre')>=0||d.indexOf('Rohre')>=0||d.indexOf('T5')>=0||d.indexOf('T8')>=0)
+    return '<svg width="100%" height="100%" viewBox="0 0 100 20" preserveAspectRatio="xMidYMid meet"><rect x="0" y="6" width="100" height="8" rx="4" fill="#eef6ff" stroke="#c8d8e8"/></svg>';
+  if(d.indexOf('Controller')>=0||d.indexOf('Fernbedienung')>=0||d.indexOf('Sensor')>=0)
+    return '<svg width="100%" height="100%" viewBox="0 0 44 44" preserveAspectRatio="xMidYMid meet"><rect x="6" y="6" width="32" height="32" rx="6" fill="#333"/><circle cx="22" cy="22" r="8" fill="#0af"/></svg>';
+  return '<svg width="100%" height="100%" viewBox="0 0 44 72" preserveAspectRatio="xMidYMid meet"><rect x="17" y="63" width="10" height="9" rx="1" fill="#c0c0c0"/><ellipse cx="22" cy="33" rx="16" ry="22" fill="#fff6e0" stroke="#f0d070"/></svg>';
+}
+
+function updateStartStatus(){
+  const el=document.getElementById('start-data-status');
+  if(el)el.textContent=(db&&db.length)?('Dane gotowe: '+db.length+' pozycji'):'Ładowanie danych...';
+}
+function enterApp(tab){const start=document.getElementById('start-screen');if(start)start.style.display='none';const app=document.getElementById('app');if(app)app.classList.remove('start-hidden');showTab(tab||'worker');}
+function itemKey(item){return item.id||(item.ean+'|'+item.location+'|'+item.name);}
+function clearListHits(){activeListHitIds=[];setListHitInfo('');const wrap=document.getElementById('list-wrap');if(wrap)wrap.classList.remove('compact');}
+function setListHitInfo(text){const box=document.getElementById('list-hit-info');if(!box)return;if(!text){box.style.display='none';box.textContent='';return;}box.style.display='block';box.textContent=text;}
+function scrollToListHit(){const el=document.querySelector('.item-card.hit');if(el)el.scrollIntoView({behavior:'smooth',block:'center'});}
+function highlightListMatches(groups,digits){
+  activeListHitIds=[];
+  const hits=db.filter(x=>x.ean&&x.ean.endsWith(digits));
+  activeListHitIds=hits.map(itemKey);
+  const parts=hits.slice(0,8).map(x=>x.name+' poz. '+x.location);
+  const input=document.getElementById('search-input');if(input)input.value=digits;
+  setListHitInfo(parts.length?'Znaleziono na liście: '+parts.join(' | '):'');
+  const isShelfActive=document.getElementById('tab-shelf')?.classList.contains('active');
+  if(!isShelfActive){showTab('list');renderList();setTimeout(scrollToListHit,80);setTimeout(scrollToListHit,250);setTimeout(scrollToListHit,600);}
+}
+async function unlockListEditing(){if(listEditing){listEditing=false;document.getElementById('list-edit-status').textContent='Tylko podgląd';document.getElementById('list-edit-toggle').textContent='Odblokuj edycję';renderList();return;}const pin=prompt('Podaj PIN do edycji listy');if(!pin)return;try{const users=await supabaseGet('employees',{select:'full_name,role,active',pin_code:'eq.'+pin,active:'eq.true',limit:'1'});const u=users[0];if(!u||!['manager','admin'].includes(String(u.role||'').toLowerCase())){alert('Brak dostępu do edycji listy');return;}listEditing=true;document.getElementById('list-edit-status').textContent='Edycja: '+u.full_name;document.getElementById('list-edit-toggle').textContent='Zablokuj edycję';renderList();}catch(e){console.error(e);alert('Nie udało się sprawdzić PIN-u');}}
+function renderShelfPicker(){
+  document.getElementById('shelf-picker').style.display='block';
+  document.getElementById('shelf-view').style.display='none';
+  activeShelfKey=null; activeShelfMatches=[];
+  const wrap=document.getElementById('shelf-picker');
+  wrap.innerHTML=Object.entries(SHELVES).map(([key,s])=>{
+    const count=Object.keys(s.items).length;
+    return `<div class="shelf-pick-card" onclick="openShelf('${key}')"><div><div class="shelf-pick-name">${shelfLabel(key,s.label)}</div><div class="shelf-pick-count">${count} pozycji</div></div><span style="font-size:20px;color:#CCC">›</span></div>`;
+  }).join('');
+}
+
+function openShelf(key){
+  activeShelfKey=key; activeShelfPos=[]; activeShelfMatches=[];
+  document.getElementById('shelf-picker').style.display='none';
+  const view=document.getElementById('shelf-view');
+  view.style.display='block';
+  renderShelf();
+}
+
+function renderShelfMarkup(key, positions, mini){
+  const s=SHELVES[key];
+  if(!s)return '';
+  const posList=(positions||[]).map(String);
+  let h=`<div class="shelf-sign">${shelfLabel(key,s.label)}</div><div class="shelf-body">`;
+  for(let r=0;r<s.rows.length;r++){
+    const [from,to]=s.rows[r];
+    h+=`<div class="shelf-rowlabel">Rząd ${r+1} · pozycje ${from}–${to}</div><div class="shelf-row">`;
+    for(let p=from;p<=to;p++){
+      const it=s.items[String(p)];
+      const d=it?it.name:'poz.'+p;
+      const on=posList.includes(String(p))?' on':'';
+      const click=mini?`clickShelfPosForShelf('${key}','${p}')`:`clickShelfPos('${p}')`;
+      h+=`<div class="shelf-prod${on}" onclick="${click}" title="Pozycja ${p}"><div class="shelf-card"><div class="shelf-svgwrap">${shelfIcon(d)}</div></div><div class="shelf-ptag"></div><div class="shelf-bn">${p}</div></div>`;
+    }
+    h+=`</div><div class="shelf-plank"></div>`;
+  }
+  h+=`</div><div class="shelf-floor"></div>`;
+  return h;
+}
+
+function renderShelf(){
+  if(!activeShelfKey)return;
+  const h=`<div class="shelf-back"><button onclick="renderShelfPicker()">‹ Wszystkie regały</button></div>${renderShelfMarkup(activeShelfKey, activeShelfPos, false)}`;
+  document.getElementById('shelf-view').innerHTML=h;
+}
+
+function renderMultiShelfMatches(groups){
+  activeShelfKey=null;
+  activeShelfMatches=groups.slice(0,4);
+  document.getElementById('shelf-picker').style.display='none';
+  const view=document.getElementById('shelf-view');
+  view.style.display='block';
+  const cards=activeShelfMatches.map(g=>`<div class="shelf-mini">${renderShelfMarkup(g.key,g.positions,true)}</div>`).join('');
+  view.innerHTML=`<div class="shelf-back"><button onclick="renderShelfPicker()">‹ Wszystkie regały</button></div><div class="shelf-multi-grid">${cards}</div>`;
+}
+
+function clickShelfPosForShelf(key,p){
+  activeShelfKey=key;
+  activeShelfPos=[String(p)];
+  activeShelfMatches=[];
+  renderShelf();
+  clickShelfPos(p);
+}
+
+function clickShelfPos(p, fromVoice){
+  activeShelfPos=[String(p)];
+  if(activeShelfKey)renderShelf();
+  const s=SHELVES[activeShelfKey];
+  if(!s)return;
+  const it=s.items[String(p)];
+  const card=document.getElementById('result-card');
+  if(it){
+    const itemName=normalizeName(it.name);
+    card.className='result-card found';
+    card.innerHTML=`<div class="result-name">${itemName}</div><div class="result-loc-label">${shelfLabel(activeShelfKey,s.label)} - Pozycja</div><div class="result-loc">${p}</div>`;
+    if(fromVoice)speak(itemName+' pozycja '+p);
+  }
+  const el=document.querySelector('.shelf-prod.on');
+  if(el)el.scrollIntoView({behavior:'smooth',block:'center',inline:'center'});
+}
+
+// Rozszerzenie wyszukiwania głosowego: szukaj na wszystkich regałach.
+// Jeśli podobny EAN jest na kilku regałach, pokaż maksymalnie 4 regały naraz.
+function speakShelfMatches(groups){
+  const entries=[];
+  for(const g of groups){
+    for(const pos of g.positions){
+      entries.push(`${shelfLabel(g.key,SHELVES[g.key].label)} pozycja ${pos}`);
+    }
+  }
+  if(entries.length===1){
+    speak(entries[0]);
+  } else {
+    speak('Znaleziono '+entries.length+' towary. '+entries.join('. '));
+  }
+}
+
+const _origSearchProduct = searchProduct;
+searchProduct = function(digits){
+  _origSearchProduct(digits);
+  const groups=[];
+  let foundName=null;
+  for(const key in SHELVES){
+    const positions=[];
+    for(const pos in SHELVES[key].items){
+      const item=SHELVES[key].items[pos];
+      if(item.ean&&item.ean.endsWith(digits)){
+        positions.push(pos);
+        if(!foundName)foundName=normalizeName(item.name);
+      }
+    }
+    if(positions.length>0)groups.push({key,positions:positions.map(String)});
+  }
+  highlightListMatches(groups,digits);
+  if(groups.length===0)return;
+  if(groups.length===1){
+    activeShelfMatches=[];
+    openShelf(groups[0].key);
+    activeShelfPos=groups[0].positions;
+    renderShelf();
+  } else {
+    renderMultiShelfMatches(groups);
+  }
+  const el=document.querySelector('.shelf-prod.on');
+  if(el)el.scrollIntoView({behavior:'smooth',block:'center',inline:'center'});
+  speakShelfMatches(groups);
+  if(document.getElementById('tab-shelf').classList.contains('active')){
+    const card=document.getElementById('result-card');
+    const total=groups.reduce((sum,g)=>sum+g.positions.length,0);
+    if(groups.length===1&&total===1){
+      card.className='result-card found';
+      card.innerHTML=`<div class="result-name">${foundName}</div><div class="result-loc-label">${shelfLabel(groups[0].key,SHELVES[groups[0].key].label)} - Pozycja</div><div class="result-loc">${groups[0].positions[0]}</div>`;
+    } else {
+      card.className='result-card found';
+      card.innerHTML=`<div class="result-name">${foundName||'Towar'}</div><div class="result-loc-label">Trafienia: ${total} - regały: ${groups.length}</div><div class="result-loc" style="font-size:24px">${groups.slice(0,4).map(g=>shelfLabel(g.key,SHELVES[g.key].label)+': '+g.positions.join(', ')).join(' | ')}</div>`;
+    }
+  }
+};
+
+function highlightShelfPositions(positions, name){
+  activeShelfPos=positions.map(String);
+  renderShelf();
+  const s=SHELVES[activeShelfKey];
+  const card=document.getElementById('result-card');
+  if(positions.length===1){
+    const it=s.items[positions[0]];
+    card.className='result-card found';
+    card.innerHTML=`<div class="result-name">${it.name}</div><div class="result-loc-label">Pozycja</div><div class="result-loc">${positions[0]}</div>`;
+    speak(it.name+' pozycja '+positions[0]);
+  } else {
+    card.className='result-card found';
+    card.innerHTML=`<div class="result-name">${name}</div><div class="result-loc-label">Pozycje (${positions.length})</div><div class="result-loc" style="font-size:28px">${positions.join(', ')}</div>`;
+    speak(name+' pozycje '+positions.join(' '));
+  }
+  const el=document.querySelector('.shelf-prod.on');
+  if(el)el.scrollIntoView({behavior:'smooth',block:'center',inline:'center'});
+}
+
+
+// === SUPABASE: dane Hornbach z bazy ===
+const SUPABASE_URL = 'https://gpgiuurkwkmtmytorwgd.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_r07Fq06vV3h8vkznoPgl7A_QcefBQB5';
+const SUPABASE_STORE_NAME = 'Hornbach';
+const SHELF_ORDER = ['philips','sylvania','ledvance','philips_hue','flair','jarzeniowki','specjale','radium'];
+
+function setStartupStatus(text, ok){
+  const label=document.getElementById('status-label');
+  const dot=document.getElementById('mic-dot');
+  if(label)label.textContent=text;
+  if(dot)dot.className='mic-status-dot'+(ok===false?' off':'');
+}
+
+async function supabaseGet(path, params){
+  const url=new URL(SUPABASE_URL+'/rest/v1/'+path);
+  Object.entries(params||{}).forEach(([k,v])=>url.searchParams.set(k,v));
+  const res=await fetch(url.toString(),{
+    headers:{
+      apikey: SUPABASE_KEY,
+      Authorization: 'Bearer '+SUPABASE_KEY,
+      Accept: 'application/json'
+    }
+  });
+  if(!res.ok){
+    const msg=await res.text().catch(()=>'');
+    throw new Error('Supabase '+res.status+': '+msg);
+  }
+  return res.json();
+}
+
+function replaceShelvesFromSupabase(shelves, items){
+  const next={};
+  for(const shelf of shelves){
+    next[shelf.shelf_key]={
+      label:shelf.label,
+      rows:shelf.rows_config,
+      items:{}
+    };
+  }
+  for(const item of items){
+    const shelf=shelves.find(s=>s.id===item.shelf_id);
+    if(!shelf||!next[shelf.shelf_key])continue;
+    next[shelf.shelf_key].items[String(item.position)]={
+      ean:String(item.ean),
+      name:normalizeName(item.product_name||item.list_name||shelf.label)
+    };
+  }
+  Object.keys(SHELVES).forEach(k=>delete SHELVES[k]);
+  const orderedKeys=SHELF_ORDER.filter(k=>next[k]).concat(Object.keys(next).filter(k=>!SHELF_ORDER.includes(k)));
+  for(const key of orderedKeys)SHELVES[key]=next[key];
+}
+
+function replaceDbFromSupabase(items){
+  db=items.slice().sort((a,b)=>String(a.list_name||a.product_name||'').localeCompare(String(b.list_name||b.product_name||''),'pl') || Number(a.position)-Number(b.position)).map(item=>({id:item.id,shelf_id:item.shelf_id,ean:String(item.ean),name:normalizeName(item.product_name||item.list_name||''),location:String(item.position),quantity:0,price:0}));
+  updateCount();updateStartStatus();
+  if(document.getElementById('tab-list')?.classList.contains('active'))renderList();
+}
+
+async function loadSupabaseData(){
+  setStartupStatus('Łączę z Supabase...', true);
+  const stores=await supabaseGet('stores', {select:'id,name', name:'eq.'+SUPABASE_STORE_NAME, active:'eq.true', limit:'1'});
+  if(!stores.length)throw new Error('Nie znaleziono sklepu Hornbach w tabeli stores');
+  const storeId=stores[0].id;
+  const shelves=await supabaseGet('shelves', {select:'id,label,shelf_key,rows_config', store_id:'eq.'+storeId});
+  if(!shelves.length)throw new Error('Nie znaleziono regałów dla Hornbach');
+  const shelfIds=shelves.map(s=>s.id).join(',');
+  const items=await supabaseGet('shelf_items', {select:'id,shelf_id,position,ean,product_name,list_name', shelf_id:'in.('+shelfIds+')', order:'position.asc'});
+  if(!items.length)throw new Error('Nie znaleziono pozycji towarów dla Hornbach');
+  replaceShelvesFromSupabase(shelves, items);
+  replaceDbFromSupabase(items);
+  localStorage.setItem('mag_supabase_cache_v13', JSON.stringify({shelves:SHELVES, db, savedAt:Date.now()}));
+  setStartupStatus('Dane z Supabase: '+items.length+' pozycji', true);
+  document.getElementById('db-count').textContent=items.length+' towarów';
+}
+
+function loadSupabaseCache(){
+  try{
+    const cached=JSON.parse(localStorage.getItem('mag_supabase_cache_v13')||'null');
+    if(!cached||!cached.shelves||!cached.db)return false;
+    Object.keys(SHELVES).forEach(k=>delete SHELVES[k]);
+    Object.assign(SHELVES,cached.shelves);
+    db=cached.db;
+    updateCount();
+    setStartupStatus('Dane offline z ostatniego pobrania', true);
+    return true;
+  }catch(e){return false;}
+}
+
+async function initApp(){
+  loadDB();
+  preloadBuiltinDB();
+  try{
+    await loadSupabaseData();
+  }catch(e){
+    console.error(e);
+    if(!loadSupabaseCache())setStartupStatus('Tryb lokalny - brak po\u0142\u0105czenia z baz\u0105', false);
+  }
+  updateMicUI(false);updateStartStatus();
+}
+
+initApp();
 </script>
+
+<style id="hornbach-shelf-final">
+#panel-shelf{background:#f5f2ea;background-image:linear-gradient(90deg,rgba(17,17,17,.035) 1px,transparent 1px),linear-gradient(rgba(17,17,17,.035) 1px,transparent 1px);background-size:18px 18px}
+#shelf-picker{background:transparent}.shelf-pick-card{background:#fff!important;border:2px solid #d8d4ca!important;border-radius:6px!important;box-shadow:inset 8px 0 0 #f37021,0 2px 0 rgba(0,0,0,.08)!important}.shelf-pick-card:active{background:#fff1c1!important}.shelf-pick-name{color:#111!important;font-weight:1000!important;text-transform:uppercase}.shelf-pick-count{color:#4b4033!important;font-weight:800!important}.shelf-back{background:#111!important;border-bottom:5px solid #f37021!important;box-shadow:inset 0 -2px 0 #ffd400!important}.shelf-back button{color:#ffd400!important;font-weight:1000!important;text-transform:uppercase}.shelf-sign{background:linear-gradient(90deg,#111 0%,#1a1a1a 50%,#f37021 100%)!important;color:#fff!important;border-radius:0!important;margin:8px 8px 0!important;border-bottom:4px solid #ffd400!important;text-transform:uppercase!important;font-weight:1000!important;letter-spacing:0!important}.shelf-body{margin:0 8px!important;border:3px solid #4c321b!important;border-top:none!important;background:#b47a36!important}.shelf-row{background:#c8914f!important;border-left:4px solid #6f431d!important;border-right:4px solid #6f431d!important}.shelf-plank{background:linear-gradient(#7d4a20,#563014)!important;border-top:2px solid #ffd400!important}.shelf-rowlabel{background:#111!important;color:#ffd400!important;font-weight:900!important;text-transform:uppercase;border-left:4px solid #f37021!important}.shelf-card{border:2px solid #111!important;border-radius:3px!important;background:#fff!important}.shelf-svgwrap{background:#fff!important}.shelf-bn{color:#111!important;font-weight:1000!important}.shelf-ptag{background:linear-gradient(90deg,#d71920,#f37021,#ffd400)!important}.shelf-floor{background:linear-gradient(#6c6c6c,#444)!important;border-top:3px solid #222!important;margin:0 8px 12px!important}.shelf-prod.on{filter:drop-shadow(0 6px 10px rgba(255,212,0,.95))!important}.shelf-prod.on .shelf-card{outline:4px solid #ffd400!important;outline-offset:2px!important}.shelf-mini{background:#fff!important;border:2px solid #d8d4ca!important;border-radius:6px!important;box-shadow:inset 5px 0 0 #f37021!important}.shelf-mini .shelf-sign{margin:0!important;border-bottom:2px solid #ffd400!important}.shelf-multi-grid{background:#f5f2ea!important}.shelf-mini .shelf-body{margin:0!important;border-left:0!important;border-right:0!important}.shelf-mini .shelf-floor{margin:0!important}
+</style>
 </body>
 </html>
